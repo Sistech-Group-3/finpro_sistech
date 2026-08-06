@@ -27,11 +27,10 @@ export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  
   return (
-    <div className="relative">
-      <header className="sticky top-0 z-50 border-b border-pink-600 bg-[#CC1893]">
-        <div className="mx-auto flex h-[82px] w-full items-center justify-between px-8 sm:px-6 lg:px-12">
+    <div className="relative w-full">
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-pink-600 bg-[#CC1893]">
+        <div className="flex h-[82px] w-full items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex flex-col">
             <h1 className="text-[26px] font-bold leading-none text-white">
               SisTrace
@@ -41,8 +40,8 @@ export default function Navbar() {
             </p>
           </Link>
 
-          {/* Desktop */}
-          <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
             {NAV_ITEMS.map(({ label, href }) => {
               const active = pathname === href;
 
@@ -50,9 +49,9 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`text-base font-medium transition ${
+                  className={`text-sm font-medium transition ${
                     active
-                      ? "text-white"
+                      ? "text-white font-bold"
                       : "text-pink-100 hover:text-white"
                   }`}
                 >
@@ -62,17 +61,17 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Mobile */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setOpen(!open)}
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/30 text-white lg:hidden mr-3 sm:mr-0"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/30 text-white lg:hidden"
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </header>
 
-      {/* Dropdown menu */}
+      {/* Dropdown Menu Mobile */}
       {open && (
         <>
           <button
@@ -81,7 +80,7 @@ export default function Navbar() {
             className="fixed inset-0 z-30 bg-black/20 lg:hidden"
           />
 
-          <nav className="absolute right-4 top-full mt-2 z-40 w-64 rounded-2xl border border-pink-100 bg-white py-2 shadow-xl lg:hidden">
+          <nav className="fixed right-4 top-[90px] z-40 w-64 rounded-2xl border border-pink-100 bg-white py-2 shadow-xl lg:hidden">
             {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const active = pathname === href;
 
@@ -92,7 +91,7 @@ export default function Navbar() {
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 text-sm font-medium ${
                     active
-                      ? "bg-pink-50 text-pink-700"
+                      ? "bg-pink-50 text-pink-700 font-semibold"
                       : "text-indigo-900 hover:bg-neutral-50"
                   }`}
                 >
