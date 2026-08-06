@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { Montserrat } from "next/font/google";
+
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+});
 
 export const metadata: Metadata = {
-  title: "SisTrace - Safety in Every Step",
-  description: "Women safety platform: safe routes, anonymous reporting, and emergency support.",
+  title: "SisTrace — Safety in Every Step",
+  description:
+    "Women safety platform: safe routes, anonymous reporting, and emergency support.",
 };
 
 export default function RootLayout({
@@ -14,14 +21,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
-        <div className="min-h-screen w-full flex justify-center bg-neutral-900 py-6">
-          <div className="w-full max-w-[430px] min-h-[778px] rounded-[28px] overflow-hidden shadow-2xl bg-gradient-to-b from-[#F8B8DD] to-[#FBD9EE] flex flex-col">
-            <Navbar />
+      <body
+        className={`${montserrat.className} bg-gradient-to-b from-[#F8B8DD] to-[#FBD9EE] min-h-screen`}
+      >
+        <Navbar />
 
-            <div className="flex-1 px-6 -mt-4 space-y-6 pb-8">{children}</div>
-          </div>
-        </div>
+        <main className="max-w-7xl mx-auto px-6 lg:px-8 xl:px-10 py-6 space-y-8">
+          {children}
+        </main>
       </body>
     </html>
   );
