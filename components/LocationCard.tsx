@@ -37,7 +37,7 @@ export default function LocationCard() {
 
   function detectLocation() {
     if (!navigator.geolocation) {
-      setError("Browser tidak mendukung geolocation");
+      setError("Browser does not support geolocation");
       return;
     }
 
@@ -61,20 +61,20 @@ export default function LocationCard() {
             data.address?.town ||
             data.address?.village ||
             data.address?.county ||
-            "Lokasi tidak diketahui";
+            "Unknown location";
 
           const country = data.address?.country || "";
 
           setLocation(country ? `${city}, ${country}` : city);
         } catch {
-          setError("Gagal mengambil nama lokasi");
+          setError("Failed to retrieve location name");
         } finally {
           setLoading(false);
         }
       },
       () => {
         setLoading(false);
-        setError("Gagal mendapatkan lokasi");
+        setError("Failed to get location");
       }
     );
   }
