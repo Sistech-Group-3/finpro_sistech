@@ -124,9 +124,7 @@ export default function SisTraceLanding() {
             Log In
           </Link>
         </div>
-      </div>
-
-      <HelpCenterCard />
-    </>
+      </main>
+    </div>
   );
 }
