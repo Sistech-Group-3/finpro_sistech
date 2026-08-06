@@ -22,11 +22,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${montserrat.className} bg-gradient-to-b from-[#F8B8DD] to-[#FBD9EE] min-h-screen`}
       >
         <Navbar />
 
-        <main className="max-w-7xl mx-auto px-6 lg:px-8 xl:px-10 py-6 space-y-8">
+        <main className="mx-auto max-w-5xl px-4 pt-[108px] sm:pt-[112px] lg:pt-[96px] pb-8 sm:px-6 lg:px-8 space-y-6">
           {children}
         </main>
       </body>
