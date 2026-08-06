@@ -3,6 +3,7 @@ import FeedsCarousel from "@/components/FeedsCarousel";
 import CategoryGrid from "@/components/CategoryGrid";
 import HelpCenterCard from "@/components/HelpCenterCard";
 import { Route, FileWarning, ShieldAlert, Users } from "lucide-react";
+import Emergency from "./test-db/emergency";
 
 const CATEGORIES = [
   { label: "Safe Route", icon: Route, href: "/safe-route" },
@@ -16,6 +17,7 @@ export default function DashboardPage() {
     <>
       <LocationCard />
       <FeedsCarousel />
+      <Emergency />
 
       <div>
         <h2 className="font-bold text-indigo-900 mb-3">Category</h2>
