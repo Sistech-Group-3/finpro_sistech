@@ -22,7 +22,7 @@ const CATEGORIES: Category[] = [
   {
     label: "Report",
     icon: FileText,
-    href: "/anonymous-report",
+    href: "/report",
   },
   {
     label: "Emergency",
