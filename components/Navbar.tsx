@@ -17,7 +17,7 @@ import {
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutGrid },
   { label: "Community Feeds", href: "/community-feeds", icon: MessageSquare },
-  { label: "Anonymous Report", href: "/anonymous-report", icon: UserCheck },
+  { label: "Anonymous Report", href: "/report", icon: UserCheck },
   { label: "Emergency", href: "/emergency", icon: ShieldAlert },
   { label: "Safety Resources", href: "/safety-resources", icon: BookOpen },
   { label: "Settings", href: "/settings", icon: Settings },
