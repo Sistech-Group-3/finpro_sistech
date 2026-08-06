@@ -1,13 +1,10 @@
 import Link from "next/link";
 import {
   LucideIcon,
-  LayoutGrid,
-  MessageSquare,
-  UserCheck,
-  ShieldAlert,
-  BookOpen,
-  Settings,
   Navigation,
+  FileText,
+  AlertTriangle,
+  Users,
 } from "lucide-react";
 
 interface Category {
@@ -17,12 +14,26 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-  { label: "Safe Route", href: "/safe-route", icon: Navigation },
-  { label: "Anonymous Report", href: "/report", icon: UserCheck },
-  { label: "Emergency", href: "/emergency", icon: ShieldAlert },
-  { label: "Crowd Check", href: "/crowd-check", icon: BookOpen },
-  { label: "Feeds", href: "/feeds", icon: MessageSquare },
-  { label: "Settings", href: "/settings", icon: Settings },
+  {
+    label: "Safe Route",
+    icon: Navigation,
+    href: "/safe-route",
+  },
+  {
+    label: "Report",
+    icon: FileText,
+    href: "/report",
+  },
+  {
+    label: "Emergency",
+    icon: AlertTriangle,
+    href: "/emergency",
+  },
+  {
+    label: "Crowd Check",
+    icon: Users,
+    href: "/crowd-check",
+  },
 ];
 
 export default function CategoryGrid() {
