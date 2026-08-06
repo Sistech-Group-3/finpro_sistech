@@ -1,7 +1,7 @@
-import LocationCard from "./components/LocationCard";
-import FeedsCarousel from "./components/FeedsCarousel";
-import CategoryGrid from "./components/CategoryGrid";
-import HelpCenterCard from "./components/HelpCenterCard";
+import LocationCard from "@/components/LocationCard";
+import FeedsCarousel from "@/components/FeedsCarousel";
+import CategoryGrid from "@/components/CategoryGrid";
+import HelpCenterCard from "@/components/HelpCenterCard";
 import { Route, FileWarning, ShieldAlert, Users } from "lucide-react";
 
 const CATEGORIES = [
