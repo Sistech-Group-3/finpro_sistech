@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 export const metadata: Metadata = {
   title: "SisTrace - Safety in Every Step",
@@ -13,16 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <div className="min-h-screen w-full flex justify-center bg-neutral-900 py-6">
-          <div className="w-full max-w-[430px] min-h-[778px] rounded-[28px] overflow-hidden shadow-2xl bg-gradient-to-b from-[#F8B8DD] to-[#FBD9EE] flex flex-col">
-            <Navbar />
-
-            <div className="flex-1 px-6 -mt-4 space-y-6 pb-8">{children}</div>
-          </div>
-        </div>
-      </body>
+    <html
+      lang="en"
+      className={`${montserrat.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
