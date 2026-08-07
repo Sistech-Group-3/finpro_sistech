@@ -9,8 +9,9 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "SisTrace - Safety in Every Step",
-  description: "Women safety platform: safe routes, anonymous reporting, and emergency support.",
+  title: "SisTrace — Safety in Every Step",
+  description:
+    "Women safety platform: safe routes, anonymous reporting, and emergency support.",
 };
 
 export default function RootLayout({
