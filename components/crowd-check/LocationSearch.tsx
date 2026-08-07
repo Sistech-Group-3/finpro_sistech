@@ -7,6 +7,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { searchLocations } from "@/lib/geocode";
 
 export interface LocationResult {
   displayName: string;
@@ -31,7 +32,8 @@ export default function LocationSearch({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (query.trim().length < 3) {
+    const queryValue = query.trim();
+    if (queryValue.length < 3) {
       setResults([]);
       return;
     }
@@ -46,60 +48,19 @@ export default function LocationSearch({
     const controller = new AbortController();
 
     const timer = setTimeout(async () => {
-      try {
-        setLoading(true);
+      setLoading(true);
 
-        const params = new URLSearchParams({
-          q: query,
-          format: "json",
-          limit: "5",
-          addressdetails: "1",
-        });
+      const items = await searchLocations(queryValue, 5);
+      if (controller.signal.aborted) return;
 
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-          {
-            signal: controller.signal,
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Location search failed: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        const mappedResults: LocationResult[] = data.map(
-          (item: {
-            display_name: string;
-            lat: string;
-            lon: string;
-          }) => ({
-            displayName: item.display_name,
-            lat: Number(item.lat),
-            lon: Number(item.lon),
-          })
-        );
-
-        setResults(mappedResults);
-      } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
-          return;
-        }
-
-        console.error("Location search failed:", error);
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
+      setResults(
+        items.map((item) => ({
+          displayName: item.display_name,
+          lat: item.lat,
+          lon: item.lon,
+        }))
+      );
+      setLoading(false);
     }, 500);
 
     return () => {

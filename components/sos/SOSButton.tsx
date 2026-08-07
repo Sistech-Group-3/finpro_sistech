@@ -7,12 +7,17 @@ const HOLD_DURATION_MS = 2000;
 
 interface SOSButtonProps {
   onTrigger: () => void;
+  triggered?: boolean;
+  disabled?: boolean;
 }
 
-export default function SOSButton({ onTrigger }: SOSButtonProps) {
+export default function SOSButton({
+  onTrigger,
+  triggered = false,
+  disabled = false,
+}: SOSButtonProps) {
   const [holding, setHolding] = useState(false);
   const [progress, setProgress] = useState(0); // 0-100
-  const [triggered, setTriggered] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -25,7 +30,7 @@ export default function SOSButton({ onTrigger }: SOSButtonProps) {
   };
 
   const startHold = () => {
-    if (triggered) return;
+    if (triggered || disabled) return;
     setHolding(true);
     startTimeRef.current = Date.now();
 
@@ -37,7 +42,7 @@ export default function SOSButton({ onTrigger }: SOSButtonProps) {
       if (elapsed >= HOLD_DURATION_MS) {
         clearTimer();
         setHolding(false);
-        setTriggered(true);
+        setProgress(0);
         onTrigger();
       }
     }, 30);
@@ -60,8 +65,12 @@ export default function SOSButton({ onTrigger }: SOSButtonProps) {
         onTouchEnd={cancelHold}
         aria-label="Hold for 2 seconds to trigger SOS alarm"
         className={`relative flex h-56 w-56 select-none flex-col items-center justify-center rounded-full text-white shadow-2xl transition-transform ${
-          triggered ? "bg-red-700" : "bg-red-600"
-        } ${holding ? "scale-95" : "scale-100"}`}
+          triggered
+            ? "bg-red-800 animate-pulse"
+            : holding
+              ? "bg-red-600 scale-95"
+              : "bg-red-600"
+        } ${disabled && !triggered ? "cursor-not-allowed opacity-70" : ""}`}
       >
         {/* Progress ring while holding */}
         <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 224 224">
@@ -91,12 +100,6 @@ export default function SOSButton({ onTrigger }: SOSButtonProps) {
         <Navigation className="h-9 w-9 rotate-45" />
         <span className="mt-2 text-2xl font-bold">SOS</span>
       </button>
-
-      {triggered && (
-        <p className="mt-4 text-center text-sm font-semibold text-red-600">
-          Alarm terkirim! Lokasi kamu sedang dibagikan ke kontak darurat.
-        </p>
-      )}
     </div>
   );
 }

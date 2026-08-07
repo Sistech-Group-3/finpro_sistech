@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
-import { ChevronLeft } from "lucide-react";
+import { useId, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 function Star({
   className,
@@ -55,6 +57,70 @@ function Star({
 }
 
 export default function SisTraceRegister() {
+  const router = useRouter();
+  const { signUp } = useAuth();
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const validate = (): boolean => {
+    const next: Record<string, string> = {};
+
+    if (!fullName.trim()) next.fullName = "Nama wajib diisi.";
+    if (!email.trim()) {
+      next.email = "Email wajib diisi.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      next.email = "Format email tidak valid.";
+    }
+    if (!password) {
+      next.password = "Password wajib diisi.";
+    } else if (password.length < 6) {
+      next.password = "Password minimal 6 karakter.";
+    }
+    if (!confirmPassword) {
+      next.confirmPassword = "Konfirmasi password wajib diisi.";
+    } else if (password !== confirmPassword) {
+      next.confirmPassword = "Password tidak sama.";
+    }
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    if (!validate()) return;
+
+    setSubmitting(true);
+    const result = await signUp(email.trim(), password, fullName.trim());
+    setSubmitting(false);
+
+    if (result.error) {
+      setFormError(result.error);
+      return;
+    }
+
+    if (result.needsEmailConfirmation) {
+      setNeedsConfirmation(true);
+      return;
+    }
+
+    router.push("/feeds");
+    router.refresh();
+  };
+
+  const inputClass = (hasError: boolean) =>
+    `w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC] ${
+      hasError ? "ring-2 ring-red-400" : ""
+    }`;
+
   return (
     <div
       style={{
@@ -121,58 +187,109 @@ export default function SisTraceRegister() {
               Teruskan persiapanmu menuju tahap selanjutnya!
             </p>
 
-            <form className="mt-6 space-y-4 text-left">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-white">
-                  Nama
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nama Lengkap"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
-                />
+            {needsConfirmation ? (
+              <div className="mt-6 flex flex-col items-center gap-3 rounded-sm bg-white/10 px-4 py-6 text-left">
+                <CheckCircle2 className="h-10 w-10 text-emerald-300" />
+                <h3 className="text-sm font-semibold text-white">
+                  Cek email kamu!
+                </h3>
+                <p className="text-xs leading-relaxed text-pink-100">
+                  Kami sudah mengirim link konfirmasi ke{" "}
+                  <span className="font-semibold text-white">{email}</span>.
+                  Silakan klik link tersebut untuk mengaktifkan akunmu, lalu
+                  masuk kembali.
+                </p>
+                <Link
+                  href="/login"
+                  className="mt-2 w-full rounded-sm bg-[#E62DAC] py-3 text-center text-sm font-semibold text-white"
+                >
+                  Ke Halaman Login
+                </Link>
               </div>
+            ) : (
+              <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit} noValidate>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    Nama
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Nama Lengkap"
+                    className={inputClass(Boolean(errors.fullName))}
+                  />
+                  {errors.fullName && (
+                    <p className="mt-1 text-xs text-red-200">{errors.fullName}</p>
+                  )}
+                </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-white">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
-                />
-              </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    className={inputClass(Boolean(errors.email))}
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-red-200">{errors.email}</p>
+                  )}
+                </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-white">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
-                />
-              </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className={inputClass(Boolean(errors.password))}
+                  />
+                  {errors.password && (
+                    <p className="mt-1 text-xs text-red-200">{errors.password}</p>
+                  )}
+                </div>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-white">
-                  Re-Enter Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Password"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
-                />
-              </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white">
+                    Re-Enter Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Password"
+                    className={inputClass(Boolean(errors.confirmPassword))}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="mt-1 text-xs text-red-200">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
 
-              <button
-                type="submit"
-                className="mt-2 w-full rounded-xs bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98]"
-              >
-                Masuk
-              </button>
-            </form>
+                {formError && (
+                  <p className="rounded-sm bg-red-100 px-3 py-2 text-xs font-medium text-red-700">
+                    {formError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xs bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
+                >
+                  {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                  {submitting ? "Mendaftarkan..." : "Daftar"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
 

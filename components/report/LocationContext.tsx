@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Info, MapPin, LocateFixed, Loader2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import { reverseGeocode } from "@/lib/geocode";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -63,13 +64,8 @@ export default function LocationContext() {
           setCoords([lat, lng]);
 
           try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-            );
-            const data = await res.json();
-            const address =
-              data.display_name || "Your Location Detected";
-            setLocationName(address);
+            const address = await reverseGeocode(lat, lng);
+            setLocationName(address || "Your Location Detected");
           } catch {
             setLocationName(`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
           } finally {
