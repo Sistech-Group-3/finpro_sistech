@@ -13,14 +13,14 @@ import {
   BookOpen,
   Settings,
   Navigation,
-  LogOut,
+  // LogOut
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutGrid },
-  { label: "Safe Route", href: "/safe-route", icon: Navigation },
-  { label: "Anonymous Report", href: "/report", icon: UserCheck },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
+  { label: "Community Feeds", href: "/community-feeds", icon: MessageSquare },
+  { label: "Anonymous Report", href: "/anonymous-report", icon: UserCheck },
   { label: "Emergency", href: "/emergency", icon: ShieldAlert },
   { label: "Crowd Check", href: "/crowd-check", icon: BookOpen },
   { label: "Feeds", href: "/feeds", icon: MessageSquare },
@@ -33,11 +33,11 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
 
-  const handleLogout = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
+  // const handleLogout = async () => {
+  //   await signOut();
+  //   router.push("/");
+  //   router.refresh();
+  // };
 
   const displayName = user?.user_metadata?.["full_name"] ?? user?.email ?? "User";
 
@@ -45,7 +45,7 @@ export default function Navbar() {
     <div className="relative w-full">
       <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-pink-600 bg-[#CC1893]">
         <div className="flex h-[82px] w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex flex-col">
+          <Link href="/dashboard" className="flex flex-col">
             <h1 className="text-[26px] font-bold leading-none text-white">
               SisTrace
             </h1>
@@ -75,7 +75,7 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop Auth */}
+          {/* Desktop Auth
           <div className="hidden lg:flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
               {displayName.charAt(0).toUpperCase()}
@@ -90,7 +90,7 @@ export default function Navbar() {
             >
               <LogOut size={18} />
             </button>
-          </div>
+          </div> */}
 
           {/* Mobile Menu Button */}
           <button
@@ -132,7 +132,7 @@ export default function Navbar() {
               );
             })}
 
-            <button
+            {/* <button
               onClick={() => {
                 setOpen(false);
                 handleLogout();
@@ -141,7 +141,7 @@ export default function Navbar() {
             >
               <LogOut className="h-4 w-4" />
               Logout
-            </button>
+            </button> */}
           </nav>
         </>
       )}

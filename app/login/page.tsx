@@ -116,7 +116,7 @@ function LoginContent() {
       className="relative min-h-screen w-full overflow-hidden flex flex-col"
     >
       {/* Decorative background stars */}
-       <Star
+      <Star
         color="#E62DAC"
         className="absolute -left-[70px] top-[200px] h-40 w-40 rotate-[-12deg]
                   lg:-left-[40px] lg:top-[70px] lg:h-50 lg:w-50 lg:rotate-[-8deg]"
@@ -204,6 +204,10 @@ function LoginContent() {
                   <p className="mt-1 text-xs text-red-200">{errors.password}</p>
                 )}
               </div>
+
+              {errors[0] && (
+                <p className="text-xs font-medium text-red-200">{errors[0]}</p>
+              )}
 
               <div className="text-right">
                 <Link href="/forgot-password" className="text-xs text-[#FAD5EE] hover:underline">
