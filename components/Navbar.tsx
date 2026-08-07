@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: LayoutGrid },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
   { label: "Safe Route", href: "/safe-route", icon: Navigation },
   { label: "Anonymous Report", href: "/report", icon: UserCheck },
   { label: "Emergency", href: "/emergency", icon: ShieldAlert },
@@ -33,7 +33,7 @@ export default function Navbar() {
     <div className="relative w-full">
       <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-pink-600 bg-[#CC1893]">
         <div className="flex h-[82px] w-full items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex flex-col">
+          <Link href="/dashboard" className="flex flex-col">
             <h1 className="text-[26px] font-bold leading-none text-white">
               SisTrace
             </h1>
