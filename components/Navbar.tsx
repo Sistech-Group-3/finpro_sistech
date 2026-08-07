@@ -13,7 +13,6 @@ import {
   BookOpen,
   Settings,
   Navigation,
-  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
