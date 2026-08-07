@@ -13,7 +13,7 @@ import {
   BookOpen,
   Settings,
   Navigation,
-  LogOut
+  // LogOut
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
@@ -32,11 +32,11 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
 
-  const handleLogout = async () => {
-    await signOut();
-    router.push("/");
-    router.refresh();
-  };
+  // const handleLogout = async () => {
+  //   await signOut();
+  //   router.push("/");
+  //   router.refresh();
+  // };
 
   const displayName = user?.user_metadata?.["full_name"] ?? user?.email ?? "User";
 
@@ -74,7 +74,7 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop Auth */}
+          {/* Desktop Auth
           <div className="hidden lg:flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
               {displayName.charAt(0).toUpperCase()}
@@ -89,7 +89,7 @@ export default function Navbar() {
             >
               <LogOut size={18} />
             </button>
-          </div>
+          </div> */}
 
           {/* Mobile Menu Button */}
           <button
@@ -131,7 +131,7 @@ export default function Navbar() {
               );
             })}
 
-            <button
+            {/* <button
               onClick={() => {
                 setOpen(false);
                 handleLogout();
@@ -140,7 +140,7 @@ export default function Navbar() {
             >
               <LogOut className="h-4 w-4" />
               Logout
-            </button>
+            </button> */}
           </nav>
         </>
       )}
