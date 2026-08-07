@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import type { EmergencyEvent, SafePoint, SafePointWithDistance } from "../types/emergency.types";
 
 interface Coords {
