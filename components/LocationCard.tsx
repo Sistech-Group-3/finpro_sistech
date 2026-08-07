@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MapPin, ChevronDown } from "lucide-react";
+import { reverseGeocodeDetails } from "@/lib/geocode";
 
 const CITY_OPTIONS = [
   "Jakarta, Indonesia",
@@ -50,20 +51,16 @@ export default function LocationCard() {
         const { latitude, longitude } = position.coords;
 
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          const details = await reverseGeocodeDetails(
+            latitude,
+            longitude
           );
 
-          const data = await res.json();
-
           const city =
-            data.address?.city ||
-            data.address?.town ||
-            data.address?.village ||
-            data.address?.county ||
+            details?.city ||
             "Unknown location";
 
-          const country = data.address?.country || "";
+          const country = details?.country || "";
 
           setLocation(country ? `${city}, ${country}` : city);
         } catch {

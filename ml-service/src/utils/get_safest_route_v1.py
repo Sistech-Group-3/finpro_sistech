@@ -340,6 +340,7 @@ def safest_route(
 		"all_scores": [
 			{
 				"route_index": i,
+				"route": r["route"],
 				"R_route_mean": r["R_route_mean"],
 				"R_route_max": r["R_route_max"],
 				"combined_score": r["combined_score"],

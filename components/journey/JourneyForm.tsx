@@ -33,11 +33,11 @@ export default function JourneyForm({
   const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
 
-  const searchDestination = async (query: string) => {
-    setDestinationQuery(query);
-
-    if (query.trim().length < 3) {
-      setSuggestions([]);
+  // Debounced autocomplete (Nominatim/Photon-style geocoders rate-limit, so a
+  // single request fires 400ms after typing stops instead of one per keystroke).
+  useEffect(() => {
+    const query = destinationQuery.trim();
+    if (query.length < 3) {
       return;
     }
 
@@ -56,10 +56,7 @@ export default function JourneyForm({
   const handleSelect = (result: GeocodeResult) => {
     setDestinationQuery(result.display_name);
     setSuggestions([]);
-    onDestinationSelect(result.display_name, [
-      parseFloat(result.lat),
-      parseFloat(result.lon),
-    ]);
+    onDestinationSelect(result.display_name, [result.lat, result.lon]);
   };
 
   return (
@@ -100,7 +97,14 @@ export default function JourneyForm({
           <input
             type="text"
             value={destinationQuery}
-            onChange={(e) => searchDestination(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              setDestinationQuery(value);
+              if (value.trim().length < 3) {
+                setSuggestions([]);
+                setSearching(false);
+              }
+            }}
             placeholder="Search destination..."
             className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
           />

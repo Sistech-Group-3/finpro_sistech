@@ -84,8 +84,16 @@ class RoutePoint(BaseModel):
     lon: float
 
 
+class RouteCandidate(BaseModel):
+    route: list[RoutePoint]
+    risk_score_mean: float
+    risk_score_max: float
+    combined_score: float
+
+
 class RouteResponse(BaseModel):
     route: list[RoutePoint]
     risk_score_mean: float
     risk_score_max: float
+    candidates: list[RouteCandidate] = []
     disclaimer: str

@@ -32,7 +32,8 @@ export default function LocationSearch({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (query.trim().length < 3) {
+    const queryValue = query.trim();
+    if (queryValue.length < 3) {
       setResults([]);
       return;
     }

@@ -19,8 +19,7 @@ import { useAuth } from "@/components/auth-provider";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
-  { label: "Community Feeds", href: "/community-feeds", icon: MessageSquare },
-  { label: "Anonymous Report", href: "/anonymous-report", icon: UserCheck },
+  { label: "Anonymous Report", href: "/report", icon: UserCheck },
   { label: "Emergency", href: "/emergency", icon: ShieldAlert },
   { label: "Crowd Check", href: "/crowd-check", icon: BookOpen },
   { label: "Feeds", href: "/feeds", icon: MessageSquare },
