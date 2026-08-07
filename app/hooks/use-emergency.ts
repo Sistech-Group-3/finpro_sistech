@@ -1,6 +1,11 @@
 import { useCallback, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import type { EmergencyEvent, SafePoint, SafePointWithDistance } from "../types/emergency.types";
+import type {
+  EmergencyEvent,
+  SafePoint,
+  SafePointWithDistance,
+  TrustedContact,
+} from "../types/emergency.types";
 
 interface Coords {
   latitude: number;
@@ -41,7 +46,9 @@ async function nearestSafePoints(coords: Coords): Promise<SafePointWithDistance[
 export function useEmergency() {
   const [activeEvent, setActiveEvent] = useState<EmergencyEvent | null>(null);
   const [safePoints, setSafePoints] = useState<SafePointWithDistance[]>([]);
+  const [contacts, setContacts] = useState<TrustedContact[]>([]);
   const [isTriggering, setIsTriggering] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const getCurrentPosition = useCallback((): Promise<Coords> => {
@@ -101,24 +108,37 @@ export function useEmergency() {
   const endSOS = useCallback(
     async (outcome: "resolved" | "cancelled") => {
       if (!activeEvent) return;
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
+      setIsEnding(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          const patch =
+            outcome === "resolved"
+              ? {
+                  status: "resolved",
+                  resolved_at: new Date().toISOString(),
+                  alarm_active: false,
+                }
+              : {
+                  status: "cancelled",
+                  cancelled_at: new Date().toISOString(),
+                  alarm_active: false,
+                };
 
-      const patch =
-        outcome === "resolved"
-          ? { status: "resolved", resolved_at: new Date().toISOString() }
-          : { status: "cancelled", cancelled_at: new Date().toISOString() };
+          const { error } = await supabase
+            .from("emergencies")
+            .update(patch)
+            .eq("id", activeEvent.id);
+          if (error) throw error;
 
-      const { error } = await supabase
-        .from("emergencies")
-        .update(patch)
-        .eq("id", activeEvent.id);
-      if (error) throw error;
-
-      setActiveEvent(null);
-      setSafePoints([]);
+          setActiveEvent(null);
+          setSafePoints([]);
+        }
+      } finally {
+        setIsEnding(false);
+      }
     },
     [activeEvent]
   );
@@ -130,13 +150,40 @@ export function useEmergency() {
     return points;
   }, [getCurrentPosition]);
 
+  const loadTrustedContacts = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setContacts([]);
+        return [];
+      }
+      const { data, error } = await supabase
+        .from("trusted_contacts")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("priority", { ascending: true });
+      if (error) throw error;
+      const list = (data ?? []) as TrustedContact[];
+      setContacts(list);
+      return list;
+    } catch {
+      setContacts([]);
+      return [];
+    }
+  }, []);
+
   return {
     activeEvent,
     safePoints,
+    contacts,
     isTriggering,
+    isEnding,
     error,
     triggerSOS,
     endSOS,
     loadNearestSafePoints,
+    loadTrustedContacts,
   };
 }
