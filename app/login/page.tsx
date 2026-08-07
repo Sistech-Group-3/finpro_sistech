@@ -205,8 +205,8 @@ function LoginContent() {
                 )}
               </div>
 
-              {error && (
-                <p className="text-xs font-medium text-red-200">{error}</p>
+              {errors[0] && (
+                <p className="text-xs font-medium text-red-200">{errors[0]}</p>
               )}
 
               <div className="text-right">
