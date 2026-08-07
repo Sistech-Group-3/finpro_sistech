@@ -1,24 +1,54 @@
 import Link from "next/link";
-import { LucideIcon } from "lucide-react";
+import {
+  LucideIcon,
+  LayoutGrid,
+  MessageSquare,
+  UserCheck,
+  ShieldAlert,
+  BookOpen,
+  Settings,
+  Navigation,
+} from "lucide-react";
 
-interface CategoryCardProps {
+interface Category {
   label: string;
   icon: LucideIcon;
   href: string;
 }
 
-export default function CategoryGrid({ label, icon: Icon, href }: CategoryCardProps) {
+const CATEGORIES: Category[] = [
+  { label: "Safe Route", href: "/safe-route", icon: Navigation },
+  { label: "Anonymous Report", href: "/report", icon: UserCheck },
+  { label: "Emergency", href: "/emergency", icon: ShieldAlert },
+  { label: "Crowd Check", href: "/crowd-check", icon: BookOpen },
+  { label: "Feeds", href: "/feeds", icon: MessageSquare },
+  { label: "Settings", href: "/settings", icon: Settings },
+];
+
+export default function CategoryGrid() {
   return (
-    <Link
-      href={href}
-      className="rounded-2xl bg-pink-50/80 hover:bg-pink-50 transition-colors px-4 py-4 flex items-center gap-3 border border-dashed border-indigo-300/60"
-    >
-      <div className="h-9 w-9 rounded-lg bg-indigo-800 flex items-center justify-center shrink-0">
-        <Icon className="h-4.5 w-4.5 text-white" />
+    <div>
+      <h2 className="font-bold text-[#5B1242] mb-3 text-sm">
+        Category
+      </h2>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        {CATEGORIES.map(({ label, icon: Icon, href }) => (
+          <Link
+            key={label}
+            href={href}
+            className="rounded-[10px] bg-[#FAD5EE] hover:bg-[#F8C4E6] transition-all pt-[12px] pb-[11px] pl-[12px] pr-[16px] sm:pr-[24px] flex items-center gap-[12px] shadow-sm"
+          >
+            <div className="h-8 w-8 rounded-[8px] bg-[#3B1578] flex items-center justify-center shrink-0">
+              <Icon className="h-4 w-4 text-white" />
+            </div>
+
+            <span className="font-bold text-[#3B1578] text-xs sm:text-sm leading-none truncate">
+              {label}
+            </span>
+          </Link>
+        ))}
       </div>
-      <span className="font-semibold text-indigo-900 text-[15px] leading-tight">
-        {label}
-      </span>
-    </Link>
+    </div>
   );
 }

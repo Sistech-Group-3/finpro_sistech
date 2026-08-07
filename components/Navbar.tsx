@@ -12,14 +12,16 @@ import {
   ShieldAlert,
   BookOpen,
   Settings,
+  Navigation,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/", icon: LayoutGrid },
-  { label: "Community Feeds", href: "/feed", icon: MessageSquare },
+  { label: "Safe Route", href: "/safe-route", icon: Navigation },
   { label: "Anonymous Report", href: "/report", icon: UserCheck },
   { label: "Emergency", href: "/emergency", icon: ShieldAlert },
-  { label: "Safety Resources", href: "/safety-resources", icon: BookOpen },
+  { label: "Crowd Check", href: "/crowd-check", icon: BookOpen },
+  { label: "Feeds", href: "/feeds", icon: MessageSquare },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -28,49 +30,70 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative">
-      <header className="bg-gradient-to-r from-[#C21C74] to-[#D6217E] px-6 pt-8 pb-8 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-pink-100/90" />
-          <div>
-            <h1 className="text-white font-extrabold text-2xl leading-tight tracking-tight">
+    <div className="relative w-full">
+      <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-pink-600 bg-[#CC1893]">
+        <div className="flex h-[82px] w-full items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex flex-col">
+            <h1 className="text-[26px] font-bold leading-none text-white">
               SisTrace
             </h1>
-            <p className="text-pink-100 text-xs leading-tight">
+            <p className="mt-1 text-xs text-pink-100">
               Safety in Every Step
             </p>
-          </div>
-        </Link>
+          </Link>
 
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-label={open ? "Close menu" : "Open menu"}
-          aria-expanded={open}
-          className="h-10 w-10 rounded-lg border border-white/40 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+          {/* Desktop Nav */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+            {NAV_ITEMS.map(({ label, href }) => {
+              const active = pathname === href;
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`text-sm font-medium transition ${
+                    active
+                      ? "text-white font-bold"
+                      : "text-pink-100 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setOpen(!open)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/30 text-white lg:hidden"
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </header>
 
+      {/* Dropdown Menu Mobile */}
       {open && (
         <>
           <button
             aria-hidden
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-30 bg-black/20"
+            className="fixed inset-0 z-30 bg-black/20 lg:hidden"
           />
 
-          <nav className="absolute right-6 top-[calc(100%-1.25rem)] z-40 w-64 rounded-2xl bg-white shadow-xl border border-pink-100 overflow-hidden py-2">
+          <nav className="fixed right-4 top-[90px] z-40 w-64 rounded-2xl border border-pink-100 bg-white py-2 shadow-xl lg:hidden">
             {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
               const active = pathname === href;
+
               return (
                 <Link
                   key={href}
                   href={href}
                   onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 text-sm font-medium ${
                     active
-                      ? "bg-pink-50 text-pink-700"
+                      ? "bg-pink-50 text-pink-700 font-semibold"
                       : "text-indigo-900 hover:bg-neutral-50"
                   }`}
                 >
