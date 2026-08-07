@@ -16,6 +16,10 @@ interface JourneyFormProps {
   onDestinationSelect: (label: string, coords: LatLng) => void;
   onStartTracking: () => void;
   onSOS: () => void;
+  /** True while the browser is fetching the user's GPS location on page load. */
+  locating?: boolean;
+  /** Set when geolocation was denied or failed, so the UI can explain why the field fell back to the default. */
+  locationError?: string | null;
 }
 
 export default function JourneyForm({
@@ -24,14 +28,13 @@ export default function JourneyForm({
   onDestinationSelect,
   onStartTracking,
   onSOS,
+  locating = false,
+  locationError = null,
 }: JourneyFormProps) {
   const [destinationQuery, setDestinationQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Geocoding via Nominatim (OpenStreetMap's free search API, no key required)
-  // Note: for production use, self-host Nominatim or use a provider with a usage policy
-  // that allows your expected traffic (the public instance has rate limits).
   const searchDestination = async (query: string) => {
     setDestinationQuery(query);
 
@@ -80,12 +83,18 @@ export default function JourneyForm({
         <div className="flex items-center rounded-xl border border-[#E62DAC]/40 bg-white px-4 py-3 shadow-sm">
           <input
             type="text"
-            value={currentLocation}
+            value={locating ? "Mendeteksi lokasi..." : currentLocation}
             onChange={(e) => onCurrentLocationChange(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none"
+            disabled={locating}
+            className="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none disabled:text-slate-400"
           />
-          <LocateFixed className="h-4 w-4 shrink-0 text-[#E62DAC]" />
+          <LocateFixed
+            className={`h-4 w-4 shrink-0 text-[#E62DAC] ${locating ? "animate-pulse" : ""}`}
+          />
         </div>
+        {locationError && (
+          <p className="mt-1 text-xs text-red-500">{locationError}</p>
+        )}
       </div>
 
       {/* Destination with geocoding autocomplete */}
