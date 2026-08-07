@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import LocationSearch, {
   LocationResult,
 } from "@/components/crowd-check/LocationSearch";
-import CrowdMap from "@/components/crowd-check/CrowdMap";
+import dynamic from "next/dynamic";
 import CrowdReporting from "@/components/crowd-check/CrowdReporting";
 import RecentReports from "@/components/crowd-check/RecentReports";
 
@@ -114,12 +114,26 @@ export default function CrowdCheckPage() {
     setCurrentLocation(finalAddress);
   };
 
+  const CrowdMap = dynamic(
+  () =>
+    import("@/components/crowd-check/CrowdMap"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[340px] w-full rounded-2xl bg-gray-100 flex items-center justify-center">
+        Loading map...
+      </div>
+    ),
+  }
+);
+
   /**
    * Dipanggil ketika user memilih hasil dari search.
    *
    * Search location juga harus otomatis mengisi
    * Current Location.
    */
+
   const handleSearchLocationSelect = (
     location: LocationResult
   ) => {

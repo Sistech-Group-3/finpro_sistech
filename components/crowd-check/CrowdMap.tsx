@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import {
   MapContainer,
   Marker,
@@ -9,6 +8,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
+import { useEffect, useMemo } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
