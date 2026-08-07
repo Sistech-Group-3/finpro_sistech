@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
-import { ChevronLeft } from "lucide-react";
+import { Suspense, useId, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 function Star({
   className,
@@ -54,7 +56,57 @@ function Star({
   );
 }
 
-export default function SisTraceLogin() {
+function LoginContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { signIn } = useAuth();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const validate = (): boolean => {
+    const next: Record<string, string> = {};
+
+    if (!email.trim()) {
+      next.email = "Email wajib diisi.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      next.email = "Format email tidak valid.";
+    }
+    if (!password) next.password = "Password wajib diisi.";
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    if (!validate()) return;
+
+    setSubmitting(true);
+    const result = await signIn(email.trim(), password);
+    setSubmitting(false);
+
+    if (result.error) {
+      setFormError(result.error);
+      return;
+    }
+
+    const next = searchParams.get("next");
+    const redirectTo =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/feeds";
+    router.push(redirectTo);
+    router.refresh();
+  };
+
+  const inputClass = (hasError: boolean) =>
+    `w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC] ${
+      hasError ? "ring-2 ring-red-400" : ""
+    }`;
+
   return (
     <div
       style={{
@@ -120,16 +172,21 @@ export default function SisTraceLogin() {
               Teruskan persiapanmu menuju tahap selanjutnya!
             </p>
 
-            <form className="mt-6 space-y-4 text-left">
+            <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit} noValidate>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-white">
                   Email
                 </label>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
+                  className={inputClass(Boolean(errors.email))}
                 />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-200">{errors.email}</p>
+                )}
               </div>
 
               <div>
@@ -138,9 +195,14 @@ export default function SisTraceLogin() {
                 </label>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
+                  className={inputClass(Boolean(errors.password))}
                 />
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-200">{errors.password}</p>
+                )}
               </div>
 
               <div className="text-right">
@@ -149,11 +211,19 @@ export default function SisTraceLogin() {
                 </Link>
               </div>
 
+              {formError && (
+                <p className="rounded-sm bg-red-100 px-3 py-2 text-xs font-medium text-red-700">
+                  {formError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="mt-2 w-full rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98]"
+                disabled={submitting}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
               >
-                Masuk
+                {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                {submitting ? "Memproses..." : "Masuk"}
               </button>
             </form>
           </div>
@@ -167,5 +237,13 @@ export default function SisTraceLogin() {
         </p>
       </main>
     </div>
+  );
+}
+
+export default function SisTraceLogin() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }
