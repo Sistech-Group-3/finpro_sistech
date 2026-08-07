@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import "./globals.css";
-import Navbar from "@/components/Navbar";
 import { Montserrat } from "next/font/google";
+import "./globals.css";
 
 const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -20,17 +20,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        suppressHydrationWarning
-        className={`${montserrat.className} bg-gradient-to-b from-[#F8B8DD] to-[#FBD9EE] min-h-screen`}
-      >
-        <Navbar />
-
-        <main className="mx-auto max-w-5xl px-4 pt-[108px] sm:pt-[112px] lg:pt-[96px] pb-8 sm:px-6 lg:px-8 space-y-6">
-          {children}
-        </main>
-      </body>
+    <html
+      lang="en"
+      className={`${montserrat.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );
 }
