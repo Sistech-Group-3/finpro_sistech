@@ -1,0 +1,152 @@
+"use client";
+
+import { useState } from "react";
+import { LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
+import type { LatLng } from "./JourneyMap";
+
+interface GeocodeResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
+interface JourneyFormProps {
+  currentLocation: string;
+  onCurrentLocationChange: (value: string) => void;
+  onDestinationSelect: (label: string, coords: LatLng) => void;
+  onStartTracking: () => void;
+  onSOS: () => void;
+}
+
+export default function JourneyForm({
+  currentLocation,
+  onCurrentLocationChange,
+  onDestinationSelect,
+  onStartTracking,
+  onSOS,
+}: JourneyFormProps) {
+  const [destinationQuery, setDestinationQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  // Geocoding via Nominatim (OpenStreetMap's free search API, no key required)
+  // Note: for production use, self-host Nominatim or use a provider with a usage policy
+  // that allows your expected traffic (the public instance has rate limits).
+  const searchDestination = async (query: string) => {
+    setDestinationQuery(query);
+
+    if (query.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          query
+        )}&limit=5`
+      );
+      const data: GeocodeResult[] = await res.json();
+      setSuggestions(data);
+    } catch (err) {
+      console.error("Geocoding failed:", err);
+      setSuggestions([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleSelect = (result: GeocodeResult) => {
+    setDestinationQuery(result.display_name);
+    setSuggestions([]);
+    onDestinationSelect(result.display_name, [
+      parseFloat(result.lat),
+      parseFloat(result.lon),
+    ]);
+  };
+
+  return (
+    <div className="mx-4 rounded-3xl bg-pink-100/70 p-6">
+      <h2 className="text-xl font-bold text-[#432F9F]">Plan Your Safe Journey</h2>
+      <p className="mt-1 text-sm text-slate-500">Choose your start and destination</p>
+
+      {/* Current location */}
+      <div className="mt-5">
+        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-[#E62DAC]">
+          <Navigation className="h-3.5 w-3.5" />
+          Current Location
+        </label>
+        <div className="flex items-center rounded-xl border border-[#E62DAC]/40 bg-white px-4 py-3 shadow-sm">
+          <input
+            type="text"
+            value={currentLocation}
+            onChange={(e) => onCurrentLocationChange(e.target.value)}
+            className="flex-1 bg-transparent text-sm text-slate-700 focus:outline-none"
+          />
+          <LocateFixed className="h-4 w-4 shrink-0 text-[#E62DAC]" />
+        </div>
+      </div>
+
+      {/* Destination with geocoding autocomplete */}
+      <div className="relative mt-4">
+        <label className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-[#E62DAC]">
+          <Navigation className="h-3.5 w-3.5 rotate-45" />
+          Destination
+        </label>
+        <div className="flex items-center rounded-xl border border-[#E62DAC]/40 bg-white px-4 py-3 shadow-sm">
+          <input
+            type="text"
+            value={destinationQuery}
+            onChange={(e) => searchDestination(e.target.value)}
+            placeholder="Search destination..."
+            className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+          />
+          <Search className="h-4 w-4 shrink-0 text-[#E62DAC]" />
+        </div>
+
+        {(suggestions.length > 0 || searching) && (
+          <div className="absolute z-[1100] mt-1 w-full overflow-hidden rounded-xl bg-white shadow-lg">
+            {searching && (
+              <div className="px-4 py-3 text-sm text-slate-400">Searching...</div>
+            )}
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => handleSelect(s)}
+                className="block w-full truncate px-4 py-3 text-left text-sm text-slate-700 hover:bg-pink-50"
+              >
+                {s.display_name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-5 flex gap-3">
+        <button
+          onClick={onStartTracking}
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#E62DAC] py-3.5 text-sm font-semibold text-white shadow-md transition-transform active:scale-[0.98]"
+          type="button"
+        >
+          <LocateFixed className="h-4 w-4" />
+          Start Smart Tracking
+        </button>
+        <button
+          onClick={onSOS}
+          className="flex w-16 flex-col items-center justify-center gap-0.5 rounded-xl bg-[#432F9F] py-3.5 text-white shadow-md transition-transform active:scale-[0.98]"
+          type="button"
+        >
+          <ShieldAlert className="h-4 w-4" />
+          <span className="text-[10px] font-bold">SOS</span>
+        </button>
+      </div>
+
+      <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+        🔒 Real-time monitoring will be active during your trip
+      </p>
+    </div>
+  );
+}

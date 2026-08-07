@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useId } from "react";
+import { useId, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
 function Star({
@@ -54,7 +55,36 @@ function Star({
   );
 }
 
+// Dummy account for testing/dev purposes only — replace with real auth (API call) before production.
+const DUMMY_ACCOUNT = {
+  email: "demo@sistrace.com",
+  password: "password123",
+};
+
 export default function SisTraceLogin() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // Simulate a network request delay so the loading state is visible
+    setTimeout(() => {
+      if (email === DUMMY_ACCOUNT.email && password === DUMMY_ACCOUNT.password) {
+        // TODO: replace with real session/token handling
+        router.push("/dashboard");
+      } else {
+        setError("Email atau password salah. Coba lagi.");
+      }
+      setLoading(false);
+    }, 600);
+  };
+
   return (
     <div
       style={{
@@ -64,7 +94,7 @@ export default function SisTraceLogin() {
       className="relative min-h-screen w-full overflow-hidden flex flex-col"
     >
       {/* Decorative background stars */}
-       <Star
+      <Star
         color="#E62DAC"
         className="absolute -left-[70px] top-[200px] h-40 w-40 rotate-[-12deg]
                   lg:-left-[40px] lg:top-[70px] lg:h-50 lg:w-50 lg:rotate-[-8deg]"
@@ -120,14 +150,24 @@ export default function SisTraceLogin() {
               Teruskan persiapanmu menuju tahap selanjutnya!
             </p>
 
-            <form className="mt-6 space-y-4 text-left">
+            {/* Dummy account hint — remove once real auth is wired up */}
+            <div className="mt-4 rounded-sm bg-white/10 px-3 py-2 text-left text-[11px] text-pink-100">
+              <p className="font-semibold">Akun dummy untuk testing:</p>
+              <p>Email: {DUMMY_ACCOUNT.email}</p>
+              <p>Password: {DUMMY_ACCOUNT.password}</p>
+            </div>
+
+            <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit}>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-white">
                   Email
                 </label>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
+                  required
                   className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
                 />
               </div>
@@ -138,10 +178,17 @@ export default function SisTraceLogin() {
                 </label>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
+                  required
                   className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
                 />
               </div>
+
+              {error && (
+                <p className="text-xs font-medium text-red-200">{error}</p>
+              )}
 
               <div className="text-right">
                 <Link href="/forgot-password" className="text-xs text-[#FAD5EE] hover:underline">
@@ -151,9 +198,10 @@ export default function SisTraceLogin() {
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98]"
+                disabled={loading}
+                className="mt-2 w-full rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
               >
-                Masuk
+                {loading ? "Memproses..." : "Masuk"}
               </button>
             </form>
           </div>
