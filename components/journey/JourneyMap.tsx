@@ -35,7 +35,10 @@ export type LatLng = [number, number];
 interface JourneyMapProps {
   origin: LatLng;
   destination: LatLng | null;
+  /** Selected route, drawn in red. */
   routePath?: LatLng[];
+  /** Alternative recommended routes, drawn muted for comparison. */
+  alternateRoutes?: LatLng[][];
 }
 
 // Small helper so the "locate me" button can move the map imperatively
@@ -87,7 +90,12 @@ const TILE_LAYERS = {
   },
 };
 
-export default function JourneyMap({ origin, destination, routePath }: JourneyMapProps) {
+export default function JourneyMap({
+  origin,
+  destination,
+  routePath,
+  alternateRoutes = [],
+}: JourneyMapProps) {
   const [layer, setLayer] = useState<keyof typeof TILE_LAYERS>("streets");
   const [mounted, setMounted] = useState(false);
 
@@ -120,13 +128,28 @@ export default function JourneyMap({ origin, destination, routePath }: JourneyMa
         <Marker position={origin} icon={startIcon} />
         {destination && <Marker position={destination} icon={endIcon} />}
 
+        {alternateRoutes.map((path, i) =>
+          path.length > 1 ? (
+            <Polyline
+              key={`alt-route-${i}`}
+              positions={path}
+              pathOptions={{
+                color: "#94a3b8",
+                weight: 2,
+                dashArray: "4 6",
+                opacity: 0.7,
+              }}
+            />
+          ) : null
+        )}
+
         {routePath && routePath.length > 1 && (
           <Polyline
             positions={routePath}
             pathOptions={{
-              color: "#64748b",
-              weight: 3,
-              dashArray: "6 6",
+              color: "#dc2626",
+              weight: 5,
+              opacity: 0.9,
             }}
           />
         )}

@@ -10,6 +10,7 @@ import LocationSearch, {
 import dynamic from "next/dynamic";
 import CrowdReporting from "@/components/crowd-check/CrowdReporting";
 import RecentReports from "@/components/crowd-check/RecentReports";
+import { reverseGeocode } from "@/lib/geocode";
 
 import type {
   CrowdLevel,
@@ -21,41 +22,6 @@ const DEFAULT_LOCATION: LocationResult = {
   lat: 41.8781,
   lon: -87.6298,
 };
-
-async function reverseGeocode(
-  latitude: number,
-  longitude: number
-): Promise<string | null> {
-  try {
-    const params = new URLSearchParams({
-      lat: latitude.toString(),
-      lon: longitude.toString(),
-      format: "json",
-    });
-
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
-      {
-        headers: {
-          Accept: "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Reverse geocoding failed: ${response.status}`
-      );
-    }
-
-    const data = await response.json();
-
-    return data?.display_name ?? null;
-  } catch (error) {
-    console.error("Reverse geocoding failed:", error);
-    return null;
-  }
-}
 
 export default function CrowdCheckPage() {
   const [selectedLocation, setSelectedLocation] =

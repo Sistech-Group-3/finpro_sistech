@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import threading
 import time
 import pandas as pd
 
@@ -9,7 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .. import config as C
 from .schemas import (DISCLAIMER, CompareEntry, CompareResponse, HealthResponse,
-                      ModelInfo, RiskResponse, RoutePoint, RouteResponse)
+                      ModelInfo, RiskResponse, RouteCandidate, RoutePoint,
+                      RouteResponse)
 from .service import RiskService
 from .persistence import PredictionLogStore, make_record
 from .route_cache import RouteCache
@@ -203,6 +205,36 @@ def recent_logs(request: Request, limit: int = 50, offset: int = 0):
 # Safe route recommendation (v1 / v2)
 # --------------------------------------------------------------------------- #
 
+# Bounded in-process cache of computed route responses, keyed by route params
+# + the temporal bucket. Re-searching the same origin/destination (or the
+# frontend re-rendering on a tap) returns instantly instead of re-running the
+# k-shortest / diverse-route search and BallTree scoring.
+_ROUTE_CACHE_MAX = 64
+_route_result_cache = {}
+_route_cache_lock = threading.Lock()
+
+
+def _route_cache_key(version: str, lat1, lon1, lat2, lon2, t_query, **params) -> str:
+    # The temporal modifier in safest_route depends only on the hour/month/
+    # weekend bucket of t_query, so a whole hour shares one result.
+    bucket = (t_query.year, t_query.month, t_query.day, t_query.hour)
+    coords = tuple(round(v, 5) for v in (lat1, lon1, lat2, lon2))
+    return repr((version, coords, bucket, tuple(sorted(params.items()))))
+
+
+def _route_cache_get(key: str):
+    with _route_cache_lock:
+        return _route_result_cache.get(key)
+
+
+def _route_cache_put(key: str, response) -> None:
+    with _route_cache_lock:
+        if key not in _route_result_cache:
+            if len(_route_result_cache) >= _ROUTE_CACHE_MAX:
+                _route_result_cache.clear()
+            _route_result_cache[key] = response
+
+
 def _score_routes(route_cache: RouteCache, route_points, df_data, t_query):
     from src.utils.get_safest_route_v1 import safest_route
     return safest_route(
@@ -235,6 +267,11 @@ def route_v1(
     df = _require_crime_df(request)
     route_cache = request.app.state.route_cache
 
+    cache_key = _route_cache_key("v1", lat1, lon1, lat2, lon2, t_query, k=k)
+    cached = _route_cache_get(cache_key)
+    if cached is not None:
+        return cached
+
     from src.utils.get_k_shortest_paths import get_k_shortest_paths
     from src.utils.get_routes_converter import routes_converter
 
@@ -245,7 +282,9 @@ def route_v1(
         raise HTTPException(404, "No walkable path between the two points.")
     converted = routes_converter(routes, G, densify_every_m=300)
 
-    return _to_route_response(_score_routes(route_cache, converted, df, t_query))
+    response = _to_route_response(_score_routes(route_cache, converted, df, t_query))
+    _route_cache_put(cache_key, response)
+    return response
 
 
 @app.get("/route/v2", response_model=RouteResponse)
@@ -265,6 +304,14 @@ def route_v2(
     df = _require_crime_df(request)
     route_cache = request.app.state.route_cache
 
+    cache_key = _route_cache_key(
+        "v2", lat1, lon1, lat2, lon2, t_query,
+        n_routes=n_routes, penalty_factor=penalty_factor,
+    )
+    cached = _route_cache_get(cache_key)
+    if cached is not None:
+        return cached
+
     from src.utils.get_safest_route_v2 import generate_diverse_routes
     from src.utils.get_routes_converter import routes_converter
 
@@ -283,15 +330,32 @@ def route_v2(
         raise HTTPException(404, "No walkable path between the two points.")
     converted = routes_converter(routes, G, densify_every_m=50)
 
-    return _to_route_response(_score_routes(route_cache, converted, df, t_query))
+    response = _to_route_response(_score_routes(route_cache, converted, df, t_query))
+    _route_cache_put(cache_key, response)
+    return response
 
 
-def _to_route_response(result: dict) -> RouteResponse:
+def _to_route_response(result: dict, max_candidates: int = 3) -> RouteResponse:
     route = [RoutePoint(lat=pt[0], lon=pt[1]) for pt in result["safest_route"]]
+
+    scored = sorted(
+        result.get("all_scores", []), key=lambda c: c["combined_score"]
+    )
+    candidates = [
+        RouteCandidate(
+            route=[RoutePoint(lat=pt[0], lon=pt[1]) for pt in c["route"]],
+            risk_score_mean=round(float(c["R_route_mean"]), 2),
+            risk_score_max=round(float(c["R_route_max"]), 2),
+            combined_score=round(float(c["combined_score"]), 2),
+        )
+        for c in scored[:max_candidates]
+    ]
+
     return RouteResponse(
         route=route,
         risk_score_mean=round(float(result["R_route_mean"]), 2),
         risk_score_max=round(float(result["R_route_max"]), 2),
+        candidates=candidates,
         disclaimer=DISCLAIMER,
     )
 
