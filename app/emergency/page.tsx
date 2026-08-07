@@ -16,6 +16,7 @@ import EmergencyContacts, {
 } from "@/components/sos/EmergencyContacts";
 import { useEmergency } from "@/app/hooks/use-emergency";
 import { useAuth } from "@/components/auth-provider";
+import { reverseGeocode } from "@/lib/geocode";
 
 const SafePointMap = dynamic(() => import("@/components/sos/SafePointMap"), {
   ssr: false,
@@ -31,19 +32,6 @@ type LatLng = [number, number];
 const DEFAULT_USER_LOCATION: LatLng = [-6.2088, 106.8456];
 const ALARM_SRC = "/audios/alarm.mp3";
 const ALARM_DURATION_MS = 20_000;
-
-async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-    );
-    const data = await res.json();
-    return data?.display_name ?? null;
-  } catch (err) {
-    console.error("Reverse geocoding failed:", err);
-    return null;
-  }
-}
 
 export default function SOSPage() {
   const { loading: authLoading } = useAuth();

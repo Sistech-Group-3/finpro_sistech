@@ -19,6 +19,11 @@ interface TriggerResult {
 
 const EARTH_RADIUS_KM = 6371;
 
+// Fallback when the browser can't resolve a position (permission denied,
+// timeout, unavailable) so SOS/nearest-safe-points still work instead of
+// erroring out.
+const FALLBACK_COORDS: Coords = { latitude: 41.8781, longitude: -87.6298 };
+
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -52,14 +57,14 @@ export function useEmergency() {
   const [error, setError] = useState<string | null>(null);
 
   const getCurrentPosition = useCallback((): Promise<Coords> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!("geolocation" in navigator)) {
-        reject(new Error("Geolocation is not supported on this device"));
+        resolve(FALLBACK_COORDS);
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        (err) => reject(err),
+        () => resolve(FALLBACK_COORDS),
         { enableHighAccuracy: true, timeout: 10_000 }
       );
     });

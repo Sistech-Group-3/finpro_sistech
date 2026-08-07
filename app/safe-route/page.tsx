@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import JourneyForm from "@/components/journey/JourneyForm";
 import type { LatLng } from "@/components/journey/JourneyMap";
+import { useEmergency } from "@/app/hooks/use-emergency";
+import { reverseGeocode } from "@/lib/geocode";
 
 // Leaflet touches `window` on import, so the map must be client-only
 // and skip server-side rendering entirely.
@@ -20,25 +22,9 @@ const JourneyMap = dynamic(() => import("@/components/journey/JourneyMap"), {
 const DEFAULT_ORIGIN: LatLng = [41.8781, -87.6298];
 const DEFAULT_LOCATION_LABEL = "Chicago, IL, USA";
 
-async function reverseGeocode(
-  lat: number,
-  lon: number
-): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
-    );
-
-    const data = await res.json();
-
-    return data?.display_name ?? null;
-  } catch (err) {
-    console.error("Reverse geocoding failed:", err);
-    return null;
-  }
-}
-
 export default function JourneyPage() {
+  const { triggerSOS, isTriggering, error: sosError } = useEmergency();
+
   const [currentLocation, setCurrentLocation] = useState(
     DEFAULT_LOCATION_LABEL
   );
@@ -122,8 +108,17 @@ export default function JourneyPage() {
     );
   };
 
-  const handleSOS = () => {
-    console.log("SOS triggered");
+  const handleSOS = async () => {
+    try {
+      const { event } = await triggerSOS();
+      console.log(event.latitude, event.longitude)
+      window.open(
+        `https://maps.google.com/?q=${event.latitude},${event.longitude}`,
+        "_blank"
+      );
+    } catch (e) {
+      console.error("SOS trigger failed:", e);
+    }
   };
 
   return (
@@ -159,7 +154,13 @@ export default function JourneyPage() {
           onSOS={handleSOS}
           locating={locating}
           locationError={locationError}
+          sosTriggering={isTriggering}
         />
+        {sosError && (
+          <p className="mx-4 mt-3 rounded-xl bg-red-100 px-4 py-2 text-center text-sm font-medium text-red-700">
+            {sosError}
+          </p>
+        )}
       </main>
     </div>
   );
