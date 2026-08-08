@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
+import { useState } from "react";
+import { Loader2, LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
 import type { LatLng } from "./JourneyMap";
 import { searchLocations, type GeocodeResult } from "@/lib/geocode";
 
@@ -13,6 +13,8 @@ interface JourneyFormProps {
   onSOS: () => void;
   /** True while the browser is fetching the user's GPS location on page load. */
   locating?: boolean;
+  /** True while the SOS signal is being sent to emergency services. */
+  sosTriggering?: boolean;
   /** Set when geolocation was denied or failed, so the UI can explain why the field fell back to the default. */
   locationError?: string | null;
 }
@@ -25,6 +27,7 @@ export default function JourneyForm({
   onSOS,
   locating = false,
   locationError = null,
+  sosTriggering = false,
 }: JourneyFormProps) {
   const [destinationQuery, setDestinationQuery] = useState("");
   const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
@@ -38,16 +41,17 @@ export default function JourneyForm({
       return;
     }
 
-    const timer = setTimeout(() => {
-      setSearching(true);
-      searchLocations(query, 5)
-        .then((data) => setSuggestions(data))
-        .catch(() => setSuggestions([]))
-        .finally(() => setSearching(false));
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [destinationQuery]);
+    setSearching(true);
+    try {
+      const data = await searchLocations(query, 5);
+      setSuggestions(data);
+    } catch (err) {
+      console.error("Geocoding failed:", err);
+      setSuggestions([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   const handleSelect = (result: GeocodeResult) => {
     setDestinationQuery(result.display_name);
@@ -138,10 +142,15 @@ export default function JourneyForm({
         </button>
         <button
           onClick={onSOS}
-          className="flex w-16 flex-col items-center justify-center gap-0.5 rounded-xl bg-[#432F9F] py-3.5 text-white shadow-md transition-transform active:scale-[0.98]"
+          disabled={sosTriggering}
+          className="flex w-16 flex-col items-center justify-center gap-0.5 rounded-xl bg-[#432F9F] py-3.5 text-white shadow-md transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           type="button"
         >
-          <ShieldAlert className="h-4 w-4" />
+          {sosTriggering ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ShieldAlert className="h-4 w-4" />
+          )}
           <span className="text-[10px] font-bold">SOS</span>
         </button>
       </div>

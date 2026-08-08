@@ -1,86 +1,78 @@
-/**
- * Geocoding helpers backed by Photon (komoot) — free, keyless, CORS-enabled.
- *
- * Nominatim (openstreetmap.org) aggressively rate-limits (HTTP 429) and
- * returns HTML on failure, so the app talks to Photon instead.
- *
- * Photon search:  GET https://photon.komoot.io/api/?q=<query>&limit=<n>
- * Photon reverse: GET https://photon.komoot.io/reverse?lat=<lat>&lon=<lon>
- * Both return GeoJSON FeatureCollections; coordinates are [lon, lat].
- */
+// Geocoding helpers backed by Photon (komoot.io) — keyless, CORS-enabled,
+// and not rate-limited like Nominatim (which returns HTTP 429 on this IP).
+
+const PHOTON_BASE = "https://photon.komoot.io";
 
 export interface GeocodeResult {
   display_name: string;
-  lat: number;
-  lon: number;
+  lat: string;
+  lon: string;
 }
 
-interface PhotonFeature {
-  properties: {
-    name?: string;
-    street?: string;
-    housenumber?: string;
-    district?: string;
-    city?: string;
-    state?: string;
-    country?: string;
-    postcode?: string;
-  };
-  geometry: {
-    coordinates: [number, number];
-  };
+function formatName(properties: Record<string, unknown>): string {
+  const parts = [
+    properties.name,
+    properties.housenumber,
+    properties.street,
+    properties.district,
+    properties.city,
+    properties.county,
+    properties.state,
+    properties.country,
+  ];
+  const joined = parts
+    .filter((p): p is string => typeof p === "string" && p.length > 0)
+    .join(", ");
+  return joined || "Unknown location";
 }
 
-function photonLabel(p: PhotonFeature["properties"]): string {
-  return (
-    [p.name, p.housenumber, p.street, p.district, p.city, p.state, p.country]
-      .filter(Boolean)
-      .join(", ")
-  );
+function toGeocodeResult(feature: {
+  properties?: Record<string, unknown>;
+  geometry?: { coordinates?: [number, number] };
+}): GeocodeResult {
+  const [lon, lat] = feature.geometry?.coordinates ?? [0, 0];
+  return {
+    display_name: formatName(feature.properties ?? {}),
+    lat: String(lat),
+    lon: String(lon),
+  };
 }
 
 export async function searchLocations(
   query: string,
   limit = 5
 ): Promise<GeocodeResult[]> {
-  try {
-    const res = await fetch(
-      `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=${limit}`
-    );
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    const features: PhotonFeature[] = Array.isArray(data?.features)
-      ? data.features
-      : [];
-
-    return features
-      .map((f) => {
-        const [lon, lat] = f.geometry.coordinates;
-        return {
-          display_name: photonLabel(f.properties),
-          lat,
-          lon,
-        };
-      })
-      .filter((r) => r.display_name.length > 0);
-  } catch {
-    return [];
-  }
+  const params = new URLSearchParams({
+    q: query,
+    limit: String(limit),
+    lang: "id",
+  });
+  const res = await fetch(`${PHOTON_BASE}/api/?${params.toString()}`);
+  if (!res.ok) throw new Error(`Location search failed: ${res.status}`);
+  const data = await res.json();
+  return (data.features ?? []).map(toGeocodeResult);
 }
 
 export async function reverseGeocode(
   lat: number,
   lon: number
 ): Promise<string | null> {
-  const details = await reverseGeocodeDetails(lat, lon);
-  return details?.display_name ?? null;
+  try {
+    const res = await fetch(
+      `${PHOTON_BASE}/reverse?lat=${lat}&lon=${lon}&lang=id`
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const feature = data.features?.[0];
+    return feature ? formatName(feature.properties ?? {}) : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface ReverseGeocodeDetails {
-  display_name: string | null;
-  city: string | null;
-  country: string | null;
+  city: string;
+  country: string;
 }
 
 export async function reverseGeocodeDetails(
@@ -89,20 +81,20 @@ export async function reverseGeocodeDetails(
 ): Promise<ReverseGeocodeDetails | null> {
   try {
     const res = await fetch(
-      `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`
+      `${PHOTON_BASE}/reverse?lat=${lat}&lon=${lon}&lang=id`
     );
     if (!res.ok) return null;
-
     const data = await res.json();
-    const f: PhotonFeature | undefined = data?.features?.[0];
-    if (!f) return null;
-
-    const p = f.properties;
-    return {
-      display_name: photonLabel(p) || null,
-      city: p.city || p.district || p.state || null,
-      country: p.country || null,
-    };
+    const props = data.features?.[0]?.properties ?? {};
+    const city =
+      props.city ||
+      props.town ||
+      props.village ||
+      props.district ||
+      props.county ||
+      "";
+    const country = props.country || "";
+    return { city, country };
   } catch {
     return null;
   }
