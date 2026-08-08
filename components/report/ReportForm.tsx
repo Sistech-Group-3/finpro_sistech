@@ -1,30 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ChevronDown } from "lucide-react";
+import { CheckCircle2, ChevronDown, AlertCircle } from "lucide-react";
 import AnonymousToggle from "./AnonymousToggle";
+import { submitReport } from "@/lib/services/reportService";
 
-export default function ReportForm() {
+interface ReportFormProps {
+  file: File | null;
+  coords: [number, number];
+  locationLabel: string;
+}
+
+export default function ReportForm({ file, coords, locationLabel }: ReportFormProps) {
+  // All existing state variable names kept exactly as-is
   const [category, setCategory] = useState("");
   const [dateTime, setDateTime] = useState("");
   const [description, setDescription] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(true);
 
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMsg(null);
 
-    setIsSubmitted(true);
+    try {
+      await submitReport({
+        category,
+        description,
+        isAnonymous,
+        dateTime,
+        coords,
+        locationLabel,
+        file,
+      });
 
-    setCategory("");
-    setDateTime("");
-    setDescription("");
-    setIsAnonymous(true);
+      // Reset form
+      setCategory("");
+      setDateTime("");
+      setDescription("");
+      setIsAnonymous(true);
 
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 5000);
+      setIsSubmitted(true);
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred.";
+      setErrorMsg(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -39,7 +66,7 @@ export default function ReportForm() {
         </p>
       </div>
 
-      {/* Notification */}
+      {/* Success Notification */}
       {isSubmitted && (
         <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 transition-all animate-in fade-in slide-in-from-top-2 duration-300">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
@@ -48,6 +75,17 @@ export default function ReportForm() {
             <p className="text-emerald-700/90">
               Thank you. Your report has been received and is being processed.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Notification */}
+      {errorMsg && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+          <div className="text-xs">
+            <p className="font-bold">Submission Failed</p>
+            <p className="text-red-700/90 break-words">{errorMsg}</p>
           </div>
         </div>
       )}
@@ -79,7 +117,7 @@ export default function ReportForm() {
         {/* Date & Time Input */}
         <div>
           <label className="mb-1 block text-xs font-bold text-pink-600">
-            Date & Time
+            Date &amp; Time of Incident
           </label>
           <input
             type="datetime-local"
@@ -107,7 +145,7 @@ export default function ReportForm() {
           />
         </div>
 
-        {/* Component Anonymous Toggle */}
+        {/* Anonymous Toggle */}
         <AnonymousToggle
           isAnonymous={isAnonymous}
           setIsAnonymous={setIsAnonymous}
@@ -116,9 +154,10 @@ export default function ReportForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="w-full rounded-xl bg-[#CC1893] py-3 text-sm font-bold text-white shadow-md transition hover:bg-pink-700 active:scale-[0.99] cursor-pointer"
+          disabled={isSubmitting}
+          className="w-full rounded-xl bg-[#CC1893] py-3 text-sm font-bold text-white shadow-md transition hover:bg-pink-700 active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Send Report
+          {isSubmitting ? "Sending Report..." : "Send Report"}
         </button>
       </form>
     </div>

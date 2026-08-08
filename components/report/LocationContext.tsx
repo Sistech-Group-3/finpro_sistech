@@ -31,7 +31,11 @@ function MapRecenter({ coords }: { coords: [number, number] }) {
   return null;
 }
 
-export default function LocationContext() {
+interface LocationContextProps {
+  onLocationChange?: (label: string, coords: [number, number]) => void;
+}
+
+export default function LocationContext({ onLocationChange }: LocationContextProps) {
   const [coords, setCoords] = useState<[number, number]>([-6.2088, 106.8456]);
   const [locationName, setLocationName] = useState<string>("Detecting location...");
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,14 +64,19 @@ export default function LocationContext() {
         async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          
-          setCoords([lat, lng]);
+          const newCoords: [number, number] = [lat, lng];
+
+          setCoords(newCoords);
 
           try {
             const address = await reverseGeocode(lat, lng);
-            setLocationName(address || "Your Location Detected");
+            const label = address || "Your Location Detected";
+            setLocationName(label);
+            onLocationChange?.(label, newCoords);
           } catch {
-            setLocationName(`Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`);
+            const fallback = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+            setLocationName(fallback);
+            onLocationChange?.(fallback, newCoords);
           } finally {
             setLoading(false);
           }
