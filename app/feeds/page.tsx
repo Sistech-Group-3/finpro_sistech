@@ -5,16 +5,19 @@ import LoadMoreButton from "@/components/feeds/LoadMoreButton";
 
 export default function FeedPage() {
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen w-full bg-[#FBD9EC]">
+      {/* Navbar */}
+      <header className="fixed inset-x-0 top-0 z-[9999]">
+        <Navbar />
+      </header>
 
-      <main className="min-h-screen flex justify-center pb-8 px-4 sm:px-6">
-        <div className="w-full max-w-2xl space-y-4">
+      <main className="min-h-screen w-full flex justify-center pt-[92px] pb-10 px-4 sm:px-6">
+        <div className="w-full max-w-[430px] lg:max-w-2xl space-y-4">
           <CreatePost />
           <FeedList />
           <LoadMoreButton />
         </div>
       </main>
-    </>
+    </div>
   );
 }

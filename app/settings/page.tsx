@@ -6,17 +6,20 @@ import DangerZone from "@/components/settings/DangerZone";
 
 export default function SettingsPage() {
   return (
-    <>
-      <Navbar />
+    <div className="min-h-screen w-full bg-[#FBD9EC]">
+      {/* Navbar */}
+      <header className="fixed inset-x-0 top-0 z-[9999]">
+        <Navbar />
+      </header>
 
-      <main className="min-h-screen px-4">
-        <div className="mx-auto flex w-full max-w-[430px] flex-col gap-5 lg:max-w-4xl">
+      <main className="w-full flex justify-center pt-24 pb-10 px-4">
+        <div className="w-full max-w-[430px] lg:max-w-4xl flex flex-col gap-5">
           <ProfileManagement />
           <EmergencyContacts />
           <RouteConfiguration />
           <DangerZone />
         </div>
       </main>
-    </>
+    </div>
   );
 }

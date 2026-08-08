@@ -63,6 +63,8 @@ function formatLocalDatetime(d: Date): string {
 }
 
 export default function JourneyPage() {
+  const { triggerSOS, isTriggering, error: sosError } = useEmergency();
+
   const [currentLocation, setCurrentLocation] = useState(
     DEFAULT_LOCATION_LABEL
   );
@@ -233,8 +235,17 @@ export default function JourneyPage() {
     );
   };
 
-  const handleSOS = () => {
-    console.log("SOS triggered");
+  const handleSOS = async () => {
+    try {
+      const { event } = await triggerSOS();
+      console.log(event.latitude, event.longitude)
+      window.open(
+        `https://maps.google.com/?q=${event.latitude},${event.longitude}`,
+        "_blank"
+      );
+    } catch (e) {
+      console.error("SOS trigger failed:", e);
+    }
   };
 
   return (
@@ -362,7 +373,13 @@ export default function JourneyPage() {
           onSOS={handleSOS}
           locating={locating}
           locationError={locationError}
+          sosTriggering={isTriggering}
         />
+        {sosError && (
+          <p className="mx-4 mt-3 rounded-xl bg-red-100 px-4 py-2 text-center text-sm font-medium text-red-700">
+            {sosError}
+          </p>
+        )}
       </main>
     </div>
   );
