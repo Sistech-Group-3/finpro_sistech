@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
+import { Loader2, LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
 import type { LatLng } from "./JourneyMap";
 import { searchLocations, type GeocodeResult } from "@/lib/geocode";
 
