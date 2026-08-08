@@ -17,6 +17,17 @@ interface TriggerResult {
   safe_points: SafePointWithDistance[];
 }
 
+// Shape for creating a new trusted contact. `priority` is optional — if
+// omitted, the contact is appended after existing ones.
+interface NewTrustedContact {
+  name: string;
+  relation?: string;
+  role?: string;
+  phone?: string;
+  email?: string;
+  priority?: number;
+}
+
 const EARTH_RADIUS_KM = 6371;
 
 // Fallback when the browser can't resolve a position (permission denied,
@@ -32,6 +43,16 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function initialsFromName(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 async function nearestSafePoints(coords: Coords): Promise<SafePointWithDistance[]> {
@@ -54,6 +75,7 @@ export function useEmergency() {
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
   const [isTriggering, setIsTriggering] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const [isAddingContact, setIsAddingContact] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const getCurrentPosition = useCallback((): Promise<Coords> => {
@@ -179,16 +201,82 @@ export function useEmergency() {
     }
   }, []);
 
+  const addTrustedContact = useCallback(
+    async (contact: NewTrustedContact): Promise<TrustedContact> => {
+      setIsAddingContact(true);
+      setError(null);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("You must be signed in to add a contact.");
+
+        const priority = contact.priority ?? contacts.length;
+
+        const { data, error: insertError } = await supabase
+          .from("trusted_contacts")
+          .insert({
+            user_id: user.id,
+            name: contact.name,
+            relation: contact.relation ?? null,
+            role: contact.role ?? null,
+            phone: contact.phone ?? null,
+            email: contact.email ?? null,
+            priority,
+          })
+          .select()
+          .single();
+        if (insertError) throw insertError;
+
+        const newContact = data as TrustedContact;
+        setContacts((prev) =>
+          [...prev, newContact].sort(
+            (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
+          )
+        );
+        return newContact;
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : "Failed to add contact";
+        setError(message);
+        throw e;
+      } finally {
+        setIsAddingContact(false);
+      }
+    },
+    [contacts]
+  );
+
+  const removeTrustedContact = useCallback(async (id: TrustedContact["id"]) => {
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("trusted_contacts")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      setContacts((prev) => prev.filter((c) => c.id !== id));
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Failed to remove contact";
+      setError(message);
+      throw e;
+    }
+  }, []);
+
   return {
     activeEvent,
     safePoints,
     contacts,
     isTriggering,
     isEnding,
+    isAddingContact,
     error,
     triggerSOS,
     endSOS,
     loadNearestSafePoints,
     loadTrustedContacts,
+    addTrustedContact,
+    removeTrustedContact,
   };
 }

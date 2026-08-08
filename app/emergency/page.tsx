@@ -14,6 +14,7 @@ import SOSButton from "@/components/sos/SOSButton";
 import EmergencyContacts, {
   type EmergencyContact,
 } from "@/components/sos/EmergencyContacts";
+import { TrustedContact } from "../types/emergency.types";
 import { useEmergency } from "@/app/hooks/use-emergency";
 import { useAuth } from "@/components/auth-provider";
 import { reverseGeocode } from "@/lib/geocode";
@@ -31,7 +32,29 @@ type LatLng = [number, number];
 
 const DEFAULT_USER_LOCATION: LatLng = [-6.2088, 106.8456];
 const ALARM_SRC = "/audios/alarm.mp3";
-const ALARM_DURATION_MS = 20_000;
+const ALARM_DURATION_MS = 100_000;
+
+// Dummy contacts used as a fallback so the UI has something to show
+// before real trusted_contacts are loaded (e.g. during dev/demo, or if
+// the user hasn't added any contacts yet).
+const DUMMY_CONTACTS: EmergencyContact[] = [
+  {
+    id: "dummy-1",
+    initials: "MJ",
+    name: "Mark Jenkins",
+    relation: "Husband",
+    email: "akiraverse.id@gmail.com",
+    role: "Primary Responder",
+  },
+  {
+    id: "dummy-2",
+    initials: "LS",
+    name: "Linda Smith",
+    relation: "Mother",
+    email: "akiraverse.id@gmail.com",
+    role: "Secondary Responder",
+  },
+];
 
 export default function SOSPage() {
   const { loading: authLoading } = useAuth();
@@ -46,6 +69,8 @@ export default function SOSPage() {
     endSOS,
     loadNearestSafePoints,
     loadTrustedContacts,
+    addTrustedContact,
+    isAddingContact,
   } = useEmergency();
 
   const [userLocation, setUserLocation] = useState<LatLng>(DEFAULT_USER_LOCATION);
@@ -138,26 +163,62 @@ export default function SOSPage() {
     ? (nearestSafePoint.address ?? nearestSafePoint.name)
     : "Lokasi Kamu";
 
-  const emergencyContacts: EmergencyContact[] = contacts.map((c) => ({
-    id: c.id,
-    name: c.name,
-    initials: c.name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase(),
-    phone: c.phone ?? undefined,
-  }));
+  const emergencyContacts: EmergencyContact[] =
+    contacts.length > 0
+      ? contacts.map((c) => ({
+          id: c.id,
+          name: c.name,
+          initials: c.name
+            .split(" ")
+            .map((word) => word[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase(),
+          phone: c.phone ?? "",
+          email: c.email ?? "",
+          relation: c.relationship ?? "",
+          role: c.role ?? "",
+        }))
+      : DUMMY_CONTACTS;
+
+  const handleAddContact = async (contact: {
+    name: string;
+    relation?: string;
+    role?: string;
+    phone?: string;
+    email?: string;
+  }) => {
+    try {
+      await addTrustedContact(contact);
+    } catch (e) {
+      console.error("Add contact failed:", e);
+    }
+  };
 
   const handleSendLocation = (contact: EmergencyContact) => {
     const loc = activeEvent
       ? [activeEvent.latitude, activeEvent.longitude]
       : userLocation;
-    const message = `SOS! Aku butuh bantuan. Lokasi aku: https://maps.google.com/?q=${loc[0]},${loc[1]}`;
-    const phone = (contact.phone ?? "").replace(/[^0-9]/g, "");
+    const mapsUrl = `https://maps.google.com/?q=${loc[0]},${loc[1]}`;
+
+    if (!contact.email) {
+      console.error(`No email on file for ${contact.name}`);
+      return;
+    }
+
+    const subject = "SOS! I need help";
+    const body = [
+      "SOS! I need help.",
+      address ? `Address: ${address}` : null,
+      `Location: ${mapsUrl}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
     window.open(
-      `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+      `mailto:${contact.email}?subject=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`,
       "_blank"
     );
   };
@@ -271,16 +332,12 @@ export default function SOSPage() {
         </div>
 
         <div className="mt-4 mx-4">
-          {emergencyContacts.length > 0 ? (
-            <EmergencyContacts
-              contacts={emergencyContacts}
-              onSendLocation={handleSendLocation}
-            />
-          ) : (
-            <div className="rounded-3xl bg-pink-100/70 p-6 text-center text-sm text-slate-500">
-              Belum ada kontak darurat. Tambahkan kontak di halaman Settings.
-            </div>
-          )}
+          <EmergencyContacts
+            contacts={emergencyContacts}
+            onSendLocation={handleSendLocation}
+            onAddContact={handleAddContact}
+            isAddingContact={isAddingContact}
+          />
         </div>
       </main>
     </div>

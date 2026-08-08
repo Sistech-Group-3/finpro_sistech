@@ -7,6 +7,7 @@ import JourneyForm from "@/components/journey/JourneyForm";
 import type { LatLng } from "@/components/journey/JourneyMap";
 import { reverseGeocode } from "@/lib/geocode";
 import { useRouteConfigStore } from "../hooks/use-route-config";
+import { useEmergency } from "../hooks/use-emergency";
 
 // Leaflet touches `window` on import, so the map must be client-only
 // and skip server-side rendering entirely.
