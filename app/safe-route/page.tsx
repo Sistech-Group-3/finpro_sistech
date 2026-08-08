@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import JourneyForm from "@/components/journey/JourneyForm";
 import type { LatLng } from "@/components/journey/JourneyMap";
 import { reverseGeocode } from "@/lib/geocode";
+import { useRouteConfigStore } from "../hooks/use-route-config";
 
 // Leaflet touches `window` on import, so the map must be client-only
 // and skip server-side rendering entirely.
@@ -76,6 +77,11 @@ export default function JourneyPage() {
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
 
+   const version = useRouteConfigStore((state) => state.version);
+  const k = useRouteConfigStore((state) => state.k);
+  const nRoutes = useRouteConfigStore((state) => state.nRoutes);
+  const penaltyFactor = useRouteConfigStore((state) => state.penaltyFactor);
+
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       setLocating(false);
@@ -143,11 +149,19 @@ export default function JourneyPage() {
       lat2: coords[0].toString(),
       lon2: coords[1].toString(),
       datetime: formatLocalDatetime(new Date()),
+      k: "3",
+      version,
+      ...(version === "v1"
+        ? { k: k.toString() }
+        : {
+            n_routes: nRoutes.toString(),
+            penalty_factor: penaltyFactor.toString(),
+          }),
     });
 
     fetch(`/api/safe-route?${params.toString()}`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(100_000),
     })
       .then(async (res) => {
         const data = await res.json();

@@ -266,11 +266,14 @@ def route_v1(
     G = _require_route(request)
     df = _require_crime_df(request)
     route_cache = request.app.state.route_cache
+    print('helo 1')
 
     cache_key = _route_cache_key("v1", lat1, lon1, lat2, lon2, t_query, k=k)
     cached = _route_cache_get(cache_key)
     if cached is not None:
         return cached
+    
+    print('helo 2')
 
     from src.utils.get_k_shortest_paths import get_k_shortest_paths
     from src.utils.get_routes_converter import routes_converter
@@ -278,9 +281,11 @@ def route_v1(
     routes = get_k_shortest_paths(
         G, lat1, lon1, lat2, lon2, k=k, weight="length", snap=route_cache.snap
     )
+    print('helo 3')
     if not routes:
         raise HTTPException(404, "No walkable path between the two points.")
-    converted = routes_converter(routes, G, densify_every_m=300)
+    converted = routes_converter(routes, G, densify_every_m=50)
+    print('helo 4')
 
     response = _to_route_response(_score_routes(route_cache, converted, df, t_query))
     _route_cache_put(cache_key, response)
