@@ -3,17 +3,22 @@
 import { useState } from "react";
 import { UploadCloud, X, FileText } from "lucide-react";
 
-export default function FileUpload() {
+interface FileUploadProps {
+  onFileChange?: (file: File | null) => void;
+}
+
+export default function FileUpload({ onFileChange }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
-    }
+    const selected = e.target.files?.[0] ?? null;
+    setFile(selected);
+    onFileChange?.(selected);
   };
 
   const removeFile = () => {
     setFile(null);
+    onFileChange?.(null);
   };
 
   return (
