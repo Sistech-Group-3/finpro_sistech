@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { Suspense, useId, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 function Star({
   className,
@@ -55,35 +56,56 @@ function Star({
   );
 }
 
-// Dummy account for testing/dev purposes only — replace with real auth (API call) before production.
-const DUMMY_ACCOUNT = {
-  email: "demo@sistrace.com",
-  password: "password123",
-};
-
-export default function SisTraceLogin() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { signIn } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  const validate = (): boolean => {
+    const next: Record<string, string> = {};
 
-    // Simulate a network request delay so the loading state is visible
-    setTimeout(() => {
-      if (email === DUMMY_ACCOUNT.email && password === DUMMY_ACCOUNT.password) {
-        // TODO: replace with real session/token handling
-        router.push("/dashboard");
-      } else {
-        setError("Email atau password salah. Coba lagi.");
-      }
-      setLoading(false);
-    }, 600);
+    if (!email.trim()) {
+      next.email = "Email wajib diisi.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      next.email = "Format email tidak valid.";
+    }
+    if (!password) next.password = "Password wajib diisi.";
+
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    if (!validate()) return;
+
+    setSubmitting(true);
+    const result = await signIn(email.trim(), password);
+    setSubmitting(false);
+
+    if (result.error) {
+      setFormError(result.error);
+      return;
+    }
+
+    const next = searchParams.get("next");
+    const redirectTo =
+      next && next.startsWith("/") && !next.startsWith("//") ? next : "/feeds";
+    router.push(redirectTo);
+    router.refresh();
+  };
+
+  const inputClass = (hasError: boolean) =>
+    `w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC] ${
+      hasError ? "ring-2 ring-red-400" : ""
+    }`;
 
   return (
     <div
@@ -150,14 +172,7 @@ export default function SisTraceLogin() {
               Teruskan persiapanmu menuju tahap selanjutnya!
             </p>
 
-            {/* Dummy account hint — remove once real auth is wired up */}
-            <div className="mt-4 rounded-sm bg-white/10 px-3 py-2 text-left text-[11px] text-pink-100">
-              <p className="font-semibold">Akun dummy untuk testing:</p>
-              <p>Email: {DUMMY_ACCOUNT.email}</p>
-              <p>Password: {DUMMY_ACCOUNT.password}</p>
-            </div>
-
-            <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit}>
+            <form className="mt-6 space-y-4 text-left" onSubmit={handleSubmit} noValidate>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-white">
                   Email
@@ -167,9 +182,11 @@ export default function SisTraceLogin() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email"
-                  required
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
+                  className={inputClass(Boolean(errors.email))}
                 />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-200">{errors.email}</p>
+                )}
               </div>
 
               <div>
@@ -181,13 +198,15 @@ export default function SisTraceLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Password"
-                  required
-                  className="w-full rounded-sm border-0 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#E62DAC]"
+                  className={inputClass(Boolean(errors.password))}
                 />
+                {errors.password && (
+                  <p className="mt-1 text-xs text-red-200">{errors.password}</p>
+                )}
               </div>
 
-              {error && (
-                <p className="text-xs font-medium text-red-200">{error}</p>
+              {errors[0] && (
+                <p className="text-xs font-medium text-red-200">{errors[0]}</p>
               )}
 
               <div className="text-right">
@@ -196,12 +215,19 @@ export default function SisTraceLogin() {
                 </Link>
               </div>
 
+              {formError && (
+                <p className="rounded-sm bg-red-100 px-3 py-2 text-xs font-medium text-red-700">
+                  {formError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                disabled={loading}
-                className="mt-2 w-full rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
+                disabled={submitting}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-sm bg-[#E62DAC] py-3.5 text-center text-base font-semibold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
               >
-                {loading ? "Memproses..." : "Masuk"}
+                {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                {submitting ? "Memproses..." : "Masuk"}
               </button>
             </form>
           </div>
@@ -215,5 +241,13 @@ export default function SisTraceLogin() {
         </p>
       </main>
     </div>
+  );
+}
+
+export default function SisTraceLogin() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

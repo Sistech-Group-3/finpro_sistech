@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -13,7 +13,9 @@ import {
   BookOpen,
   Settings,
   Navigation,
+  LogOut
 } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutGrid },
@@ -27,7 +29,17 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    router.push("/");
+    router.refresh();
+  };
+
+  const displayName = user?.user_metadata?.["full_name"] ?? user?.email ?? "User";
 
   return (
     <div className="relative w-full">
@@ -62,6 +74,23 @@ export default function Navbar() {
               );
             })}
           </nav>
+
+          {/* Desktop Auth */}
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+            <span className="max-w-[140px] truncate text-sm font-medium text-pink-100">
+              {displayName}
+            </span>
+            <button
+              onClick={handleLogout}
+              title="Logout"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/30 text-white transition hover:bg-white/10"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -102,6 +131,17 @@ export default function Navbar() {
                 </Link>
               );
             })}
+
+            <button
+              onClick={() => {
+                setOpen(false);
+                handleLogout();
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-neutral-50"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
           </nav>
         </>
       )}

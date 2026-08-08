@@ -6,21 +6,17 @@ import HelpCenterCard from "@/components/HelpCenterCard";
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen w-full bg-[#FBD9EC]">
-      <header className="fixed inset-x-0 top-0 z-[9999]">
-        <Navbar />
-      </header>
+    <>
+      <Navbar />
 
-      <main className="flex w-full justify-center pt-24 pb-10">
-        <div className="w-full max-w-[430px] lg:max-w-3xl">
-          <div className="px-5 space-y-4">
-            <LocationCard />
-            <FeedsCarousel />
-            <CategoryGrid />
-            <HelpCenterCard />
-          </div>
+      <main className="min-h-screen w-full bg-[#FBD9EC] flex justify-center pt-[92px] pb-10 px-4 sm:px-6">
+        <div className="w-full max-w-[430px] lg:max-w-2xl space-y-4 sm:space-y-5">
+          <LocationCard />
+          <FeedsCarousel />
+          <CategoryGrid />
+          <HelpCenterCard />
         </div>
       </main>
-    </div>
+    </>
   );
 }

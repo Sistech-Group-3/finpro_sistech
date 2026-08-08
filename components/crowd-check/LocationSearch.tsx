@@ -7,6 +7,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { searchLocations } from "@/lib/geocode";
 
 export interface LocationResult {
   displayName: string;
@@ -31,7 +32,8 @@ export default function LocationSearch({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (query.trim().length < 3) {
+    const queryValue = query.trim();
+    if (queryValue.length < 3) {
       setResults([]);
       return;
     }
@@ -49,42 +51,13 @@ export default function LocationSearch({
       try {
         setLoading(true);
 
-        const params = new URLSearchParams({
-          q: query,
-          format: "json",
-          limit: "5",
-          addressdetails: "1",
-        });
+        const data = await searchLocations(query, 5);
 
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-          {
-            signal: controller.signal,
-            headers: {
-              Accept: "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Location search failed: ${response.status}`
-          );
-        }
-
-        const data = await response.json();
-
-        const mappedResults: LocationResult[] = data.map(
-          (item: {
-            display_name: string;
-            lat: string;
-            lon: string;
-          }) => ({
-            displayName: item.display_name,
-            lat: Number(item.lat),
-            lon: Number(item.lon),
-          })
-        );
+        const mappedResults: LocationResult[] = data.map((item) => ({
+          displayName: item.display_name,
+          lat: Number(item.lat),
+          lon: Number(item.lon),
+        }));
 
         setResults(mappedResults);
       } catch (error) {

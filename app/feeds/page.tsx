@@ -11,13 +11,11 @@ export default function FeedPage() {
         <Navbar />
       </header>
 
-      <main className="w-full flex justify-center pt-24 pb-10">
-        <div className="w-full max-w-[430px] lg:max-w-4xl">
-          <div className="px-5 space-y-4">
-            <CreatePost />
-            <FeedList />
-            <LoadMoreButton />
-          </div>
+      <main className="min-h-screen w-full flex justify-center pt-[92px] pb-10 px-4 sm:px-6">
+        <div className="w-full max-w-[430px] lg:max-w-2xl space-y-4">
+          <CreatePost />
+          <FeedList />
+          <LoadMoreButton />
         </div>
       </main>
     </div>
