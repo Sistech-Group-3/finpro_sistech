@@ -152,7 +152,6 @@ export default function JourneyPage() {
       lat2: coords[0].toString(),
       lon2: coords[1].toString(),
       datetime: formatLocalDatetime(new Date()),
-      k: "3",
       version,
       ...(version === "v1"
         ? { k: k.toString() }
