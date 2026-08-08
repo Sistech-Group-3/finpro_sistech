@@ -1,9 +1,22 @@
+"use client";
+
+import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import LocationContext from "@/components/report/LocationContext";
 import FileUpload from "@/components/report/FileUpload";
 import ReportForm from "@/components/report/ReportForm";
 
 export default function ReportPage() {
+  // Shared state — lifted up so LocationContext & FileUpload can feed ReportForm
+  const [file, setFile] = useState<File | null>(null);
+  const [coords, setCoords] = useState<[number, number]>([-6.2088, 106.8456]);
+  const [locationLabel, setLocationLabel] = useState<string>("");
+
+  const handleLocationChange = (label: string, newCoords: [number, number]) => {
+    setLocationLabel(label);
+    setCoords(newCoords);
+  };
+
   return (
     <div className="min-h-screen w-full bg-[#FBD9EC]">
       {/* Navbar */}
@@ -15,12 +28,16 @@ export default function ReportPage() {
         <div className="w-full max-w-5xl">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
             <div className="space-y-5 lg:col-span-5">
-              <LocationContext />
-              <FileUpload />
+              <LocationContext onLocationChange={handleLocationChange} />
+              <FileUpload onFileChange={setFile} />
             </div>
 
             <div className="lg:col-span-7">
-              <ReportForm />
+              <ReportForm
+                file={file}
+                coords={coords}
+                locationLabel={locationLabel}
+              />
             </div>
           </div>
         </div>
