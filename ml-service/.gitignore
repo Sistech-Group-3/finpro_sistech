@@ -1,0 +1,9 @@
+.venv
+.DS_Store
+*.joblib
+__pycache__/
+*.pyc
+src/artifacts/
+src/dataset/sampled_dataset_engineered.csv
+src/dataset/chicago_risk_pseudo_labels-2.csv
+src/dataset/*.parquet

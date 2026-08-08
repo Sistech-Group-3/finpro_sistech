@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local ML-service artifacts (uv venv, python bytecode, egg-info).
+    "ml-service/.venv/**",
+    "ml-service/**/__pycache__/**",
+    "ml-service/mlops.egg-info/**",
   ]),
 ]);
 
