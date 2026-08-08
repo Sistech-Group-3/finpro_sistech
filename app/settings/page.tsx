@@ -11,8 +11,7 @@ export default function SettingsPage() {
         <Navbar />
       </header>
 
-      {/* Page */}
-      <main className="w-full flex justify-center pt-20 pb-10 px-4">
+      <main className="w-full flex justify-center pt-24 pb-10 px-4">
         <div className="w-full max-w-[430px] lg:max-w-4xl flex flex-col gap-5">
           <ProfileManagement />
           <EmergencyContacts />

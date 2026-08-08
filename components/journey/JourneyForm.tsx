@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, LocateFixed, Navigation, Search, ShieldAlert } from "lucide-react";
 import type { LatLng } from "./JourneyMap";
 import { searchLocations, type GeocodeResult } from "@/lib/geocode";
@@ -38,25 +38,33 @@ export default function JourneyForm({
   useEffect(() => {
     const query = destinationQuery.trim();
     if (query.length < 3) {
+      setSuggestions([]);
       return;
     }
 
-    setSearching(true);
-    try {
-      const data = await searchLocations(query, 5);
-      setSuggestions(data);
-    } catch (err) {
-      console.error("Geocoding failed:", err);
-      setSuggestions([]);
-    } finally {
-      setSearching(false);
-    }
-  };
+    const timeoutId = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await searchLocations(query, 5);
+        setSuggestions(data);
+      } catch (err) {
+        console.error("Geocoding failed:", err);
+        setSuggestions([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [destinationQuery]);
 
   const handleSelect = (result: GeocodeResult) => {
     setDestinationQuery(result.display_name);
     setSuggestions([]);
-    onDestinationSelect(result.display_name, [result.lat, result.lon]);
+    onDestinationSelect(result.display_name, [
+      parseFloat(result.lat),
+      parseFloat(result.lon),
+    ]);
   };
 
   return (
