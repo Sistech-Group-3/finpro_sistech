@@ -48,31 +48,19 @@ export default function LocationSearch({
     const controller = new AbortController();
 
     const timer = setTimeout(async () => {
-      try {
-        setLoading(true);
+      setLoading(true);
 
-        const data = await searchLocations(query, 5);
+      const items = await searchLocations(queryValue, 5);
+      if (controller.signal.aborted) return;
 
-        const mappedResults: LocationResult[] = data.map((item) => ({
+      setResults(
+        items.map((item) => ({
           displayName: item.display_name,
-          lat: Number(item.lat),
-          lon: Number(item.lon),
-        }));
-
-        setResults(mappedResults);
-      } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
-          return;
-        }
-
-        console.error("Location search failed:", error);
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
+          lat: item.lat,
+          lon: item.lon,
+        }))
+      );
+      setLoading(false);
     }, 500);
 
     return () => {

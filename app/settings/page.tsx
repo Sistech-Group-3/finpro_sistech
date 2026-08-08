@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import ProfileManagement from "@/components/settings/ProfileManagement";
 import EmergencyContacts from "@/components/settings/EmergencyContacts";
+import RouteConfiguration from "@/components/settings/RouteConfiguration";
 import DangerZone from "@/components/settings/DangerZone";
 
 export default function SettingsPage() {
@@ -15,6 +16,7 @@ export default function SettingsPage() {
         <div className="w-full max-w-[430px] lg:max-w-4xl flex flex-col gap-5">
           <ProfileManagement />
           <EmergencyContacts />
+          <RouteConfiguration />
           <DangerZone />
         </div>
       </main>

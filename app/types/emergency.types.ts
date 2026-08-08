@@ -18,6 +18,7 @@ export interface TrustedContact {
   phone: string | null;
   email: string | null;
   relationship: string | null;
+  role: string | null;
   priority: number;
   notify_via: NotifyChannel[];
   created_at: string;

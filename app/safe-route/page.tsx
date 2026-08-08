@@ -5,15 +5,9 @@ import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import JourneyForm from "@/components/journey/JourneyForm";
 import type { LatLng } from "@/components/journey/JourneyMap";
-import { useEmergency } from "@/app/hooks/use-emergency";
 import { reverseGeocode } from "@/lib/geocode";
-import {
-  ROUTE_LABELS,
-  routeRiskLabel,
-  formatLocalDatetime,
-  type RouteOption,
-  type SafeRouteResponse,
-} from "@/lib/route";
+import { useRouteConfigStore } from "../hooks/use-route-config";
+import { useEmergency } from "../hooks/use-emergency";
 
 // Leaflet touches `window` on import, so the map must be client-only
 // and skip server-side rendering entirely.
@@ -28,6 +22,46 @@ const JourneyMap = dynamic(() => import("@/components/journey/JourneyMap"), {
 
 const DEFAULT_ORIGIN: LatLng = [41.8781, -87.6298];
 const DEFAULT_LOCATION_LABEL = "Chicago, IL, USA";
+
+interface SafeRouteResponse {
+  route: { lat: number; lon: number }[];
+  risk_score_mean: number;
+  risk_score_max: number;
+  candidates: {
+    route: { lat: number; lon: number }[];
+    risk_score_mean: number;
+    risk_score_max: number;
+    combined_score: number;
+  }[];
+  disclaimer: string;
+}
+
+interface RouteOption {
+  path: LatLng[];
+  riskScoreMean: number;
+  riskScoreMax: number;
+  combinedScore: number;
+}
+
+const ROUTE_LABELS = ["Rute A", "Rute B", "Rute C"];
+
+function routeRiskLabel(score: number): { text: string; color: string } {
+  if (score < 25)
+    return { text: "Rendah", color: "bg-green-100 text-green-700" };
+  if (score < 50)
+    return { text: "Sedang", color: "bg-yellow-100 text-yellow-700" };
+  if (score < 75)
+    return { text: "Tinggi", color: "bg-orange-100 text-orange-700" };
+  return { text: "Sangat Tinggi", color: "bg-red-100 text-red-700" };
+}
+
+function formatLocalDatetime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  );
+}
 
 export default function JourneyPage() {
   const { triggerSOS, isTriggering, error: sosError } = useEmergency();
@@ -45,6 +79,11 @@ export default function JourneyPage() {
   const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
+
+   const version = useRouteConfigStore((state) => state.version);
+  const k = useRouteConfigStore((state) => state.k);
+  const nRoutes = useRouteConfigStore((state) => state.nRoutes);
+  const penaltyFactor = useRouteConfigStore((state) => state.penaltyFactor);
 
   useEffect(() => {
     if (!("geolocation" in navigator)) {
@@ -113,11 +152,19 @@ export default function JourneyPage() {
       lat2: coords[0].toString(),
       lon2: coords[1].toString(),
       datetime: formatLocalDatetime(new Date()),
+      k: "3",
+      version,
+      ...(version === "v1"
+        ? { k: k.toString() }
+        : {
+            n_routes: nRoutes.toString(),
+            penalty_factor: penaltyFactor.toString(),
+          }),
     });
 
     fetch(`/api/safe-route?${params.toString()}`, {
       cache: "no-store",
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(100_000),
     })
       .then(async (res) => {
         const data = await res.json();
